@@ -73,7 +73,7 @@ const VisualisePageWrapper = () => {
                 </div>
             }
         >
-            <VisualisePage behandlingId={Number(behandlingId)} />
+            <VisualisePage behandlingId={behandlingId} />
         </Suspense>
     );
 };

@@ -6,6 +6,7 @@ import { Grunnlagstype, TreeChild, TreeChildTypeEnum } from "../../api/BidragBeh
 import { EChartsOption, ReactECharts } from "../../components/e-charts/ReactECharts";
 import { BEHANDLING_API_V1 } from "../../constants/api";
 import PageWrapper from "../PageWrapper";
+
 interface VisualiserPageProps {
     behandlingId?: string;
     vedtakId?: string;
@@ -25,12 +26,12 @@ export default ({ behandlingId }: VisualiserPageProps) => {
         </PageWrapper>
     );
 };
+
 function VisualiserPageContent({ behandlingId, vedtakId }: VisualiserPageProps) {
     const [showBehandlingId, setShowBehandlingId] = useState<string | undefined>(behandlingId);
     const [showVedtakId, setShowVedtakId] = useState<string | undefined>(vedtakId);
 
     const onSearchBehandling = (id: string) => {
-        console.log("HERER", id);
         setShowBehandlingId(id);
         setShowVedtakId(undefined);
     };
@@ -41,32 +42,19 @@ function VisualiserPageContent({ behandlingId, vedtakId }: VisualiserPageProps) 
     };
     return (
         <div>
-            <Heading size="medium">Visualiser vedtak</Heading>
-            <div className="max-w-96 flex flex-row gap-[20px]">
-                <Search
-                    size="small"
-                    hideLabel={false}
-                    label="Visualiser behandling"
-                    variant="primary"
-                    onSearchClick={onSearchBehandling}
-                ></Search>
-                <Search
-                    size="small"
-                    hideLabel={false}
-                    label="Visualiser vedtak"
-                    variant="primary"
-                    onSearchClick={onSearchVedtak}
-                ></Search>
+            <Heading>Visualiser vedtak</Heading>
+            <div>
+                <Search label="Visualiser behandling" variant="primary" onSearchClick={onSearchBehandling}></Search>
+                <Search label="Visualiser vedtak" variant="primary" onSearchClick={onSearchVedtak}></Search>
             </div>
-            <div className="border-2 border-solid">
-                <RenderGraph behandlingId={showBehandlingId} />
-            </div>
+            <RenderGraph behandlingId={showBehandlingId} />
         </div>
     );
 }
+
 function RenderGraph({ behandlingId }: { behandlingId: string }) {
     const { data } = useSuspenseQuery({
-        queryKey: ["graph", behandlingId],
+        queryKey: ["graph", behandlingId.toString()],
         queryFn: () => {
             return BEHANDLING_API_V1.api.vedtakTilTre(Number(behandlingId));
         },
