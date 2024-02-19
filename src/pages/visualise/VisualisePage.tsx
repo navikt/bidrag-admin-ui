@@ -5,10 +5,11 @@ import React, { Suspense } from "react";
 import { Grunnlagstype, TreeChild, TreeChildTypeEnum } from "../../api/BidragBehandlingApiV1";
 import { EChartsOption, ReactECharts } from "../../components/e-charts/ReactECharts";
 import { BEHANDLING_API_V1 } from "../../constants/api";
+import PageWrapper from "../PageWrapper";
 
 export default ({ behandlingId }: { behandlingId: number }) => {
     return (
-        <div className="">
+        <PageWrapper name="">
             <Suspense
                 fallback={
                     <div className="flex justify-center">
@@ -18,7 +19,7 @@ export default ({ behandlingId }: { behandlingId: number }) => {
             >
                 <RenderGraph behandlingId={behandlingId} />
             </Suspense>
-        </div>
+        </PageWrapper>
     );
 };
 
@@ -31,7 +32,7 @@ function RenderGraph({ behandlingId }: { behandlingId: number }) {
         select: (data) => data.data,
     });
     console.log(data, toEchartData(data));
-    return <ReactECharts option={toEchart(data)} style={{ height: "100%", overflow: "auto", margin: "auto" }} />;
+    return <ReactECharts option={toEchart(data)} style={{ height: "calc(100% - 70px)", margin: "auto" }} />;
 }
 
 function toEchart(tree: TreeChild): EChartsOption {

@@ -10,6 +10,8 @@ module.exports = merge(webpackCommon, {
             STATIC_FILES_URL: "",
             BIDRAG_VEDTAK_URL: "",
             BIDRAG_BEHANDLING_URL: "",
+            UNLEASH_FRONTEND_TOKEN: "",
+            UNLEASH_API_URL: "",
         }),
     ],
 });

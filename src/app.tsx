@@ -52,7 +52,7 @@ export default function App() {
                 >
                     <BrowserRouter>
                         <Routes>
-                            <Route path="/visualiser/:behandlingId">
+                            <Route path="/admin/visualiser/:behandlingId">
                                 <Route index element={<VisualisePageWrapper />} />
                             </Route>
                         </Routes>
