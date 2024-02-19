@@ -28,7 +28,7 @@ module.exports = {
                 minifyIdentifiers: false,
                 minifyWhitespace: true,
                 minifySyntax: true,
-                globalName: "bidrag_behandling_ui",
+                globalName: "bidrag_admin_ui",
                 css: true,
                 keepNames: true,
             }),
