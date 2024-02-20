@@ -52,7 +52,7 @@ export default function App() {
                 >
                     <BrowserRouter>
                         <Routes>
-                            <Route path="/admin/visualiser/:behandlingId">
+                            <Route path="/admin/visualiser/:id">
                                 <Route index element={<VisualisePageWrapper />} />
                             </Route>
                         </Routes>
@@ -64,7 +64,7 @@ export default function App() {
 }
 
 const VisualisePageWrapper = () => {
-    const { behandlingId } = useParams<{ behandlingId?: string }>();
+    const { id } = useParams<{ id?: string }>();
     return (
         <Suspense
             fallback={
@@ -73,7 +73,7 @@ const VisualisePageWrapper = () => {
                 </div>
             }
         >
-            <VisualisePage behandlingId={behandlingId} />
+            <VisualisePage id={id} />
         </Suspense>
     );
 };

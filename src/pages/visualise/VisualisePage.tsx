@@ -1,18 +1,107 @@
-import { Heading, Loader, Search } from "@navikt/ds-react";
+import "./VisualisePage.css";
+
+import { Heading, Loader, Search, Switch, Tabs } from "@navikt/ds-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import React, { Suspense, useState } from "react";
+import mermaid from "mermaid";
+import React, { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import svgPanZoom from "svg-pan-zoom";
 
 import { Grunnlagstype, TreeChild, TreeChildTypeEnum } from "../../api/BidragBehandlingApiV1";
 import { EChartsOption, ReactECharts } from "../../components/e-charts/ReactECharts";
 import { BEHANDLING_API_V1 } from "../../constants/api";
 import PageWrapper from "../PageWrapper";
-interface VisualiserPageProps {
+mermaid.initialize({
+    startOnLoad: true,
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis", nodeSpacing: 20 },
+});
+
+interface VisualiserVedtakGraphProps {
     behandlingId?: string;
     vedtakId?: string;
 }
-export default ({ behandlingId }: VisualiserPageProps) => {
+
+interface VisualiserPageProps {
+    id?: string;
+    vedtakId?: string;
+}
+export default ({ id }: VisualiserPageProps) => {
     return (
         <PageWrapper name="">
+            <VisualiserVedtak id={id} />
+        </PageWrapper>
+    );
+};
+
+const existingSearchParams = () => paramsToObject(new URLSearchParams(window.location.search));
+function paramsToObject(entries) {
+    const result = {};
+    for (const [key, value] of entries) {
+        // each 'entry' is a [key, value] tupple
+        result[key] = value;
+    }
+    return result;
+}
+function VisualiserVedtak(props: VisualiserPageProps) {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [id, setId] = useState<string | undefined>(props.id);
+    const [isBehandlingId, setIsBehandlingId] = useState<boolean>(searchParams.get("erBehandlingId") ? true : false);
+
+    const onSearch = (id: string) => {
+        setId(id);
+    };
+
+    return (
+        <div className="p-2">
+            <Heading size="medium">Visualiser vedtak</Heading>
+            <div className="max-w-96 flex flex-col gap-[2px]">
+                <Search
+                    size="small"
+                    hideLabel={true}
+                    label="Visualiser behandling"
+                    variant="primary"
+                    defaultValue={props.id}
+                    onSearchClick={onSearch}
+                ></Search>
+                <Switch
+                    checked={isBehandlingId}
+                    size="small"
+                    onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setSearchParams({ ...existingSearchParams(), erBehandlingId: isChecked ? "true" : "false" });
+                        setIsBehandlingId(e.target.checked);
+                    }}
+                >
+                    Er behandlingid
+                </Switch>
+            </div>
+            <div className="border-2 border-solid">
+                <VisualiserVedtakGraph behandlingId={isBehandlingId ? id : id} vedtakId={isBehandlingId ? id : id} />
+            </div>
+        </div>
+    );
+}
+
+function VisualiserVedtakGraph({ behandlingId }: VisualiserVedtakGraphProps) {
+    const [searchParams, setSearchParams] = useSearchParams();
+    type GrafType = "treegraph" | "flowchart";
+    const [state, setState] = useState<GrafType>(
+        searchParams.get("graftype") == "treegraph" ? "treegraph" : "flowchart"
+    );
+
+    return (
+        <Tabs
+            value={state}
+            onChange={(value) => {
+                setSearchParams({ ...existingSearchParams(), graftype: value });
+                setState(value as GrafType);
+            }}
+            size="small"
+        >
+            <Tabs.List>
+                <Tabs.Tab label="Flowchart" value="flowchart" />
+                <Tabs.Tab label="Tregraph" value="treegraph" />
+            </Tabs.List>
             <Suspense
                 fallback={
                     <div className="flex justify-center">
@@ -20,51 +109,45 @@ export default ({ behandlingId }: VisualiserPageProps) => {
                     </div>
                 }
             >
-                <VisualiserPageContent behandlingId={behandlingId} />
+                <Tabs.Panel value={"flowchart"}>
+                    {state == "flowchart" && (
+                        <VedtakMermaidFlowChart behandlingId={behandlingId} show={state == "flowchart"} />
+                    )}
+                </Tabs.Panel>
+                <Tabs.Panel value={"treegraph"}>
+                    <VedtakTreeGraph behandlingId={behandlingId} />
+                </Tabs.Panel>
             </Suspense>
-        </PageWrapper>
-    );
-};
-function VisualiserPageContent({ behandlingId, vedtakId }: VisualiserPageProps) {
-    const [showBehandlingId, setShowBehandlingId] = useState<string | undefined>(behandlingId);
-    const [showVedtakId, setShowVedtakId] = useState<string | undefined>(vedtakId);
-
-    const onSearchBehandling = (id: string) => {
-        console.log("HERER", id);
-        setShowBehandlingId(id);
-        setShowVedtakId(undefined);
-    };
-
-    const onSearchVedtak = (id: string) => {
-        setShowVedtakId(id);
-        setShowBehandlingId(undefined);
-    };
-    return (
-        <div>
-            <Heading size="medium">Visualiser vedtak</Heading>
-            <div className="max-w-96 flex flex-row gap-[20px]">
-                <Search
-                    size="small"
-                    hideLabel={false}
-                    label="Visualiser behandling"
-                    variant="primary"
-                    onSearchClick={onSearchBehandling}
-                ></Search>
-                <Search
-                    size="small"
-                    hideLabel={false}
-                    label="Visualiser vedtak"
-                    variant="primary"
-                    onSearchClick={onSearchVedtak}
-                ></Search>
-            </div>
-            <div className="border-2 border-solid">
-                <RenderGraph behandlingId={showBehandlingId} />
-            </div>
-        </div>
+        </Tabs>
     );
 }
-function RenderGraph({ behandlingId }: { behandlingId: string }) {
+
+function VedtakMermaidFlowChart({ behandlingId, show }: VisualiserVedtakGraphProps & { show: boolean }) {
+    const { data } = useSuspenseQuery({
+        queryKey: ["mermaid", behandlingId, show],
+        queryFn: () => {
+            return BEHANDLING_API_V1.api.vedtakTilMermaid(Number(behandlingId));
+        },
+        select: (data) => data.data,
+    });
+
+    const divRef = useRef<HTMLDivElement>();
+    useEffect(() => {
+        mermaid
+            .render("mermaidSvg", data, divRef.current)
+            .then((res) => {
+                divRef.current.innerHTML = res.svg;
+                svgPanZoom("#mermaidSvg");
+                if (res.bindFunctions) {
+                    res.bindFunctions(divRef.current);
+                }
+            })
+            .catch((e) => console.error(e));
+    }, [data]);
+    return <div ref={divRef} className="mermaid h-full" />;
+}
+
+function VedtakTreeGraph({ behandlingId }: VisualiserVedtakGraphProps) {
     const { data } = useSuspenseQuery({
         queryKey: ["graph", behandlingId],
         queryFn: () => {
@@ -72,8 +155,7 @@ function RenderGraph({ behandlingId }: { behandlingId: string }) {
         },
         select: (data) => data.data,
     });
-    console.log(data, toEchartData(data));
-    return <ReactECharts option={toEchart(data)} style={{ height: "calc(100% - 70px)", margin: "auto" }} />;
+    return <ReactECharts option={toEchart(data)} style={{ height: "calc(100% - 200px)", margin: "auto" }} />;
 }
 
 function toEchart(tree: TreeChild): EChartsOption {
@@ -106,7 +188,7 @@ function toEchart(tree: TreeChild): EChartsOption {
                 top: "1%",
                 left: "10%",
                 bottom: "1%",
-                right: "10%",
+                right: "50%",
                 symbolSize: 7,
                 label: {
                     position: "left",
@@ -167,7 +249,9 @@ function toEchartData(tree: TreeChild) {
             ? JSON.stringify(tree.grunnlag?.innhold, null, 2)
             : tree.periode
               ? JSON.stringify(tree.periode, null, 2)
-              : "",
+              : tree.stønad
+                ? JSON.stringify(tree.stønad, null, 2)
+                : "",
         itemStyle: {
             borderType: getBordertype(),
         },

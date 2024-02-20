@@ -9,6 +9,61 @@
  * ---------------------------------------------------------------
  */
 
+export interface Behandling {
+    vedtakstype: Vedtakstype;
+    /** @format date */
+    søktFomDato: string;
+    /** @format date */
+    datoTom?: string;
+    /** @format date */
+    mottattdato: string;
+    saksnummer: string;
+    /** @format int64 */
+    soknadsid: number;
+    /** @format int64 */
+    soknadRefId?: number;
+    behandlerEnhet: string;
+    opprettetAv: string;
+    opprettetAvNavn?: string;
+    kildeapplikasjon: string;
+    soknadFra: SoktAvType;
+    stonadstype?: Stonadstype;
+    engangsbeloptype?: Engangsbeloptype;
+    /** @format int64 */
+    vedtaksid?: number;
+    /** @format date */
+    virkningstidspunkt?: string;
+    getårsak?: TypeArsakstype;
+    avslag?: Resultatkode;
+    virkningstidspunktsbegrunnelseIVedtakOgNotat?: string;
+    virkningstidspunktbegrunnelseKunINotat?: string;
+    boforholdsbegrunnelseIVedtakOgNotat?: string;
+    boforholdsbegrunnelseKunINotat?: string;
+    inntektsbegrunnelseIVedtakOgNotat?: string;
+    inntektsbegrunnelseKunINotat?: string;
+    /** @format int64 */
+    id?: number;
+    /** @format int64 */
+    grunnlagspakkeid?: number;
+    /** @format date-time */
+    grunnlagSistInnhentet?: string;
+    /** @uniqueItems true */
+    roller: Rolle[];
+    /** @uniqueItems true */
+    husstandsbarn: Husstandsbarn[];
+    /** @uniqueItems true */
+    inntekter: Inntekt[];
+    /** @uniqueItems true */
+    sivilstand: Sivilstand[];
+    deleted: boolean;
+    grunnlagListe: GrunnlagEntity[];
+    /** @format date */
+    virkningstidspunktEllerSøktFomDato: string;
+    bidragsmottaker?: Rolle;
+    søknadsbarn: Rolle[];
+    bidragspliktig?: Rolle;
+}
+
 export enum Bostatuskode {
     MED_FORELDER = "MED_FORELDER",
     DOKUMENTERT_SKOLEGANG = "DOKUMENTERT_SKOLEGANG",
@@ -30,6 +85,75 @@ export enum Engangsbeloptype {
     SAERTILSKUDD = "SAERTILSKUDD",
     SAeRTILSKUDD = "SÆRTILSKUDD",
     TILBAKEKREVING = "TILBAKEKREVING",
+}
+
+export interface GrunnlagEntity {
+    behandling: Behandling;
+    type: OpplysningerType;
+    data: string;
+    /** @format date-time */
+    innhentet: string;
+    /** @format date-time */
+    aktiv?: string;
+    /** @format int64 */
+    id?: number;
+}
+
+export interface Husstandsbarn {
+    behandling: Behandling;
+    medISaken: boolean;
+    /** @format int64 */
+    id?: number;
+    ident?: string;
+    navn?: string;
+    /** @format date */
+    foedselsdato: string;
+    /** @uniqueItems true */
+    perioder: Husstandsbarnperiode[];
+}
+
+export interface Husstandsbarnperiode {
+    husstandsbarn: Husstandsbarn;
+    /** @format date */
+    datoFom?: string;
+    /** @format date */
+    datoTom?: string;
+    bostatus: Bostatuskode;
+    kilde: Kilde;
+    /** @format int64 */
+    id?: number;
+}
+
+export interface Inntekt {
+    inntektsrapportering: Inntektsrapportering;
+    belop: number;
+    /** @format date */
+    datoFom: string;
+    /** @format date */
+    datoTom?: string;
+    ident: string;
+    kilde: Kilde;
+    taMed: boolean;
+    /** @format int64 */
+    id?: number;
+    behandling?: Behandling;
+    /** @uniqueItems true */
+    inntektsposter: Inntektspost[];
+    gjelderBarn?: string;
+    /** @format date */
+    opprinneligFom?: string;
+    /** @format date */
+    opprinneligTom?: string;
+}
+
+export interface Inntektspost {
+    beløp: number;
+    kode: string;
+    visningsnavn: string;
+    /** @format int64 */
+    id?: number;
+    inntekt?: Inntekt;
+    inntektstype?: Inntektstype;
 }
 
 export enum Inntektsrapportering {
@@ -159,12 +283,38 @@ export enum Resultatkode {
     UTENLANDSK_YTELSE = "UTENLANDSK_YTELSE",
 }
 
+export interface Rolle {
+    behandling: Behandling;
+    rolletype: Rolletype;
+    ident?: string;
+    /** @format date */
+    foedselsdato: string;
+    /** @format date-time */
+    opprettet: string;
+    /** @format int64 */
+    id?: number;
+    navn?: string;
+    deleted: boolean;
+}
+
 export enum Rolletype {
     BA = "BA",
     BM = "BM",
     BP = "BP",
     FR = "FR",
     RM = "RM",
+}
+
+export interface Sivilstand {
+    behandling: Behandling;
+    /** @format date */
+    datoFom?: string;
+    /** @format date */
+    datoTom?: string;
+    sivilstand: Sivilstandskode;
+    kilde: Kilde;
+    /** @format int64 */
+    id?: number;
 }
 
 export enum Sivilstandskode {
@@ -696,14 +846,21 @@ export interface OpprettRolleDto {
 /** BaseGrunnlag */
 export interface BaseGrunnlag {
     type: Grunnlagstype;
-    /** Referanse til personobjektet grunnlaget gjelder */
-    gjelderReferanse?: string;
+    /** Liste over grunnlagsreferanser */
+    grunnlagsreferanseListe: string[];
     /** Grunnlagsinnhold (generisk) */
     innhold: JsonNode;
     /** Referanse (unikt navn på grunnlaget) */
     referanse: string;
-    /** Liste over grunnlagsreferanser */
-    grunnlagsreferanseListe: string[];
+    /** Referanse til personobjektet grunnlaget gjelder */
+    gjelderReferanse?: string;
+}
+
+/** Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endringGyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING' */
+export enum Beslutningstype {
+    AVVIST = "AVVIST",
+    STADFESTELSE = "STADFESTELSE",
+    ENDRING = "ENDRING",
 }
 
 export enum Grunnlagstype {
@@ -760,6 +917,12 @@ export enum Grunnlagstype {
     INNHENTET_INNTEKT_UTVIDETBARNETRYGD_PERIODE = "INNHENTET_INNTEKT_UTVIDETBARNETRYGD_PERIODE",
 }
 
+/** Angir om stønaden skal innkreves */
+export enum Innkrevingstype {
+    MED_INNKREVING = "MED_INNKREVING",
+    UTEN_INNKREVING = "UTEN_INNKREVING",
+}
+
 /** Grunnlagsinnhold (generisk) */
 export type JsonNode = object;
 
@@ -770,8 +933,9 @@ export interface TreeChild {
     children: TreeChild[];
     /** BaseGrunnlag */
     grunnlag?: BaseGrunnlag;
-    grunnlagstype?: Grunnlagstype;
     periode?: TreePeriode;
+    stønad?: TreeStonad;
+    grunnlagstype?: Grunnlagstype;
 }
 
 export interface TreePeriode {
@@ -782,6 +946,34 @@ export interface TreePeriode {
     resultatkode: string;
     /** Referanse - delytelseId/beslutningslinjeId -> bidrag-regnskap. Skal fjernes senere */
     delytelseId?: string;
+}
+
+export interface TreeStonad {
+    type: Stonadstype;
+    /** Referanse til sak */
+    sak: string;
+    /** Personidenten til den som skal betale bidraget */
+    skyldner: string;
+    /** Personidenten til den som krever bidraget */
+    kravhaver: string;
+    /** Personidenten til den som mottar bidraget */
+    mottaker: string;
+    /**
+     * Angir første år en stønad skal indeksreguleres
+     * @format int32
+     */
+    førsteIndeksreguleringsår?: number;
+    /** Angir om stønaden skal innkreves */
+    innkreving: Innkrevingstype;
+    /** Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endringGyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING' */
+    beslutning: Beslutningstype;
+    /**
+     * Id for vedtaket det er klaget på
+     * @format int32
+     */
+    omgjørVedtakId?: number;
+    /** Referanse som brukes i utlandssaker */
+    eksternReferanse?: string;
 }
 
 export interface SivilstandGrunnlagDto {
@@ -826,16 +1018,7 @@ export enum SivilstandskodePDL {
 
 export interface SivilstandBeregnet {
     status: SivilstandBeregnetStatusEnum;
-    sivilstandListe: SivilstandBeregnetPeriode[];
-}
-
-export interface SivilstandBeregnetPeriode {
-    /** @format date */
-    periodeFom: string;
-    /** @format date */
-    periodeTom?: string;
-    sivilstandskode: Sivilstandskode;
-    grunnlagsreferanser: string[];
+    sivilstandListe: Sivilstand[];
 }
 
 /** Periodisert liste over innhentede inntekter fra a-inntekt og underliggende poster */
