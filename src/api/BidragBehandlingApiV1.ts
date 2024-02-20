@@ -57,11 +57,11 @@ export interface Behandling {
     sivilstand: Sivilstand[];
     deleted: boolean;
     grunnlagListe: GrunnlagEntity[];
+    søknadsbarn: Rolle[];
+    bidragsmottaker?: Rolle;
+    bidragspliktig?: Rolle;
     /** @format date */
     virkningstidspunktEllerSøktFomDato: string;
-    bidragsmottaker?: Rolle;
-    søknadsbarn: Rolle[];
-    bidragspliktig?: Rolle;
 }
 
 export enum Bostatuskode {
@@ -846,17 +846,16 @@ export interface OpprettRolleDto {
 /** BaseGrunnlag */
 export interface BaseGrunnlag {
     type: Grunnlagstype;
-    /** Liste over grunnlagsreferanser */
-    grunnlagsreferanseListe: string[];
-    /** Grunnlagsinnhold (generisk) */
-    innhold: JsonNode;
     /** Referanse (unikt navn på grunnlaget) */
     referanse: string;
+    /** Grunnlagsinnhold (generisk) */
+    innhold: JsonNode;
     /** Referanse til personobjektet grunnlaget gjelder */
     gjelderReferanse?: string;
+    /** Liste over grunnlagsreferanser */
+    grunnlagsreferanseListe: string[];
 }
 
-/** Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endringGyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING' */
 export enum Beslutningstype {
     AVVIST = "AVVIST",
     STADFESTELSE = "STADFESTELSE",
@@ -917,7 +916,6 @@ export enum Grunnlagstype {
     INNHENTET_INNTEKT_UTVIDETBARNETRYGD_PERIODE = "INNHENTET_INNTEKT_UTVIDETBARNETRYGD_PERIODE",
 }
 
-/** Angir om stønaden skal innkreves */
 export enum Innkrevingstype {
     MED_INNKREVING = "MED_INNKREVING",
     UTEN_INNKREVING = "UTEN_INNKREVING",
@@ -935,45 +933,46 @@ export interface TreeChild {
     grunnlag?: BaseGrunnlag;
     periode?: TreePeriode;
     stønad?: TreeStonad;
+    vedtak?: TreeVedtak;
     grunnlagstype?: Grunnlagstype;
 }
 
 export interface TreePeriode {
     beløp?: number;
-    /** Valutakoden tilhørende stønadsbeløpet */
     valutakode?: string;
-    /** Resultatkoden tilhørende stønadsbeløpet */
     resultatkode: string;
-    /** Referanse - delytelseId/beslutningslinjeId -> bidrag-regnskap. Skal fjernes senere */
     delytelseId?: string;
 }
 
 export interface TreeStonad {
     type: Stonadstype;
-    /** Referanse til sak */
     sak: string;
-    /** Personidenten til den som skal betale bidraget */
     skyldner: string;
-    /** Personidenten til den som krever bidraget */
     kravhaver: string;
-    /** Personidenten til den som mottar bidraget */
     mottaker: string;
-    /**
-     * Angir første år en stønad skal indeksreguleres
-     * @format int32
-     */
+    /** @format int32 */
     førsteIndeksreguleringsår?: number;
-    /** Angir om stønaden skal innkreves */
     innkreving: Innkrevingstype;
-    /** Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endringGyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING' */
     beslutning: Beslutningstype;
-    /**
-     * Id for vedtaket det er klaget på
-     * @format int32
-     */
+    /** @format int32 */
     omgjørVedtakId?: number;
-    /** Referanse som brukes i utlandssaker */
     eksternReferanse?: string;
+}
+
+export interface TreeVedtak {
+    kilde: TreeVedtakKildeEnum;
+    type: Vedtakstype;
+    opprettetAv: string;
+    opprettetAvNavn?: string;
+    kildeapplikasjon: string;
+    /** @format date-time */
+    vedtakstidspunkt: string;
+    enhetsnummer?: string;
+    /** @format date */
+    innkrevingUtsattTilDato?: string;
+    fastsattILand?: string;
+    /** @format date-time */
+    opprettetTidspunkt: string;
 }
 
 export interface SivilstandGrunnlagDto {
@@ -1815,6 +1814,11 @@ export enum TreeChildTypeEnum {
     STONADSENDRING = "STØNADSENDRING",
     PERIODE = "PERIODE",
     GRUNNLAG = "GRUNNLAG",
+}
+
+export enum TreeVedtakKildeEnum {
+    MANUELT = "MANUELT",
+    AUTOMATISK = "AUTOMATISK",
 }
 
 export enum SivilstandBeregnetStatusEnum {

@@ -1,4 +1,4 @@
-import "./VisualisePage.css";
+import "./VedtakExplorer.css";
 
 import { Heading, Loader, Search, Switch, Tabs } from "@navikt/ds-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -9,26 +9,23 @@ import svgPanZoom from "svg-pan-zoom";
 
 import { Grunnlagstype, TreeChild, TreeChildTypeEnum } from "../../api/BidragBehandlingApiV1";
 import { EChartsOption, ReactECharts } from "../../components/e-charts/ReactECharts";
-import { BEHANDLING_API_V1 } from "../../constants/api";
+import { BEHANDLING_API_V1, BIDRAG_VEDTAK_API } from "../../constants/api";
 import PageWrapper from "../PageWrapper";
+import missingImg from "./missing.jpeg";
 mermaid.initialize({
     startOnLoad: true,
     flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis", nodeSpacing: 5 },
 });
 
-interface VisualiserVedtakGraphProps {
+interface VedtakExplorerGraphProps {
     behandlingId?: string;
     vedtakId?: string;
 }
 
-interface VisualiserPageProps {
-    id?: string;
-    vedtakId?: string;
-}
-export default ({ id }: VisualiserPageProps) => {
+export default () => {
     return (
         <PageWrapper name="">
-            <VisualiserVedtak id={id} />
+            <VedtakExplorer />
         </PageWrapper>
     );
 };
@@ -42,25 +39,28 @@ function paramsToObject(entries) {
     }
     return result;
 }
-function VisualiserVedtak(props: VisualiserPageProps) {
+function VedtakExplorer() {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [id, setId] = useState<string | undefined>(props.id);
-    const [isBehandlingId, setIsBehandlingId] = useState<boolean>(searchParams.get("erBehandlingId") ? true : false);
+    const [id, setId] = useState<string | undefined>(searchParams.get("id"));
+    const [isBehandlingId, setIsBehandlingId] = useState<boolean>(
+        searchParams.get("erBehandlingId") == "true" ? true : false
+    );
 
     const onSearch = (id: string) => {
+        setSearchParams({ ...existingSearchParams(), id });
         setId(id);
     };
 
     return (
         <div className="p-2">
-            <Heading size="medium">Visualiser vedtak</Heading>
+            <Heading size="medium">Vedtak explorer</Heading>
             <div className="max-w-96 flex flex-col gap-[2px]">
                 <Search
                     size="small"
                     hideLabel={true}
                     label="Visualiser behandling"
                     variant="primary"
-                    defaultValue={props.id}
+                    defaultValue={id}
                     onSearchClick={onSearch}
                 ></Search>
                 <Switch
@@ -72,23 +72,34 @@ function VisualiserVedtak(props: VisualiserPageProps) {
                         setIsBehandlingId(e.target.checked);
                     }}
                 >
-                    Er behandlingid
+                    Er behandlingsid
                 </Switch>
             </div>
             <div className="border-2 border-solid">
-                <VisualiserVedtakGraph behandlingId={isBehandlingId ? id : id} vedtakId={isBehandlingId ? id : id} />
+                <VisualiserVedtakGraph
+                    behandlingId={isBehandlingId ? id : null}
+                    vedtakId={isBehandlingId ? null : id}
+                />
             </div>
         </div>
     );
 }
 
-function VisualiserVedtakGraph({ behandlingId }: VisualiserVedtakGraphProps) {
+function VisualiserVedtakGraph({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
     const [searchParams, setSearchParams] = useSearchParams();
     type GrafType = "treegraph" | "flowchart";
     const [state, setState] = useState<GrafType>(
         searchParams.get("graftype") == "treegraph" ? "treegraph" : "flowchart"
     );
 
+    if (behandlingId == null && vedtakId == null) {
+        return (
+            <div>
+                Søk etter vedtaksid som du vil visualisere
+                <img src={missingImg}></img>
+            </div>
+        );
+    }
     return (
         <Tabs
             value={state}
@@ -110,23 +121,25 @@ function VisualiserVedtakGraph({ behandlingId }: VisualiserVedtakGraphProps) {
                 }
             >
                 <Tabs.Panel value={"flowchart"}>
-                    {state == "flowchart" && (
-                        <VedtakMermaidFlowChart behandlingId={behandlingId} show={state == "flowchart"} />
-                    )}
+                    {state == "flowchart" && <VedtakMermaidFlowChart behandlingId={behandlingId} vedtakId={vedtakId} />}
                 </Tabs.Panel>
                 <Tabs.Panel value={"treegraph"}>
-                    <VedtakTreeGraph behandlingId={behandlingId} />
+                    <VedtakTreeGraph behandlingId={behandlingId} vedtakId={vedtakId} />
                 </Tabs.Panel>
             </Suspense>
         </Tabs>
     );
 }
 
-function VedtakMermaidFlowChart({ behandlingId, show }: VisualiserVedtakGraphProps & { show: boolean }) {
+function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
     const { data } = useSuspenseQuery({
-        queryKey: ["mermaid", behandlingId, show],
+        queryKey: ["mermaid", behandlingId, vedtakId],
         queryFn: () => {
-            return BEHANDLING_API_V1.api.vedtakTilMermaid(Number(behandlingId));
+            console.log(behandlingId, vedtakId);
+            if (behandlingId) {
+                return BEHANDLING_API_V1.api.vedtakTilMermaid(Number(behandlingId));
+            }
+            return BIDRAG_VEDTAK_API.vedtak.vedtakTilMermaid(Number(vedtakId));
         },
         select: (data) => data.data,
     });
@@ -147,11 +160,14 @@ function VedtakMermaidFlowChart({ behandlingId, show }: VisualiserVedtakGraphPro
     return <div ref={divRef} className="mermaid h-full" />;
 }
 
-function VedtakTreeGraph({ behandlingId }: VisualiserVedtakGraphProps) {
+function VedtakTreeGraph({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
     const { data } = useSuspenseQuery({
-        queryKey: ["graph", behandlingId],
+        queryKey: ["graph", behandlingId, vedtakId],
         queryFn: () => {
-            return BEHANDLING_API_V1.api.vedtakTilTre(Number(behandlingId));
+            if (behandlingId != null) {
+                return BEHANDLING_API_V1.api.vedtakTilTre(Number(behandlingId));
+            }
+            return BIDRAG_VEDTAK_API.vedtak.vedtakTilTre(Number(vedtakId));
         },
         select: (data) => data.data,
     });
@@ -188,7 +204,7 @@ function toEchart(tree: TreeChild): EChartsOption {
                 top: "1%",
                 left: "10%",
                 bottom: "1%",
-                right: "50%",
+                right: "30%",
                 symbolSize: 7,
                 label: {
                     position: "left",
@@ -251,7 +267,9 @@ function toEchartData(tree: TreeChild) {
               ? JSON.stringify(tree.periode, null, 2)
               : tree.stønad
                 ? JSON.stringify(tree.stønad, null, 2)
-                : "",
+                : tree.vedtak
+                  ? JSON.stringify(tree.vedtak, null, 2)
+                  : "",
         itemStyle: {
             borderType: getBordertype(),
         },
@@ -272,7 +290,7 @@ function toEchartData(tree: TreeChild) {
                 <br/>
                 gjelder: ${tree.grunnlag?.gjelderReferanse}
                 <br/><br/>
-                <pre>${v.value}</pre>`;
+                <pre>${v.value.replaceAll("\\n", "\n")}</pre>`;
             },
         },
         collapsed: tree.type == TreeChildTypeEnum.GRUNNLAG,

@@ -4,9 +4,9 @@ import { QueryClient, QueryClientProvider, useQueryErrorResetBoundary } from "@t
 import { FlagProvider, IConfig } from "@unleash/proxy-client-react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import VisualisePage from "./pages/visualise/VisualisePage";
+import VedtakExplorer from "./pages/visualise/VedtakExplorer";
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -52,8 +52,8 @@ export default function App() {
                 >
                     <BrowserRouter>
                         <Routes>
-                            <Route path="/admin/visualiser/:id">
-                                <Route index element={<VisualisePageWrapper />} />
+                            <Route path="/admin/vedtak/explorer">
+                                <Route index element={<VedtakExplorerWrapper />} />
                             </Route>
                         </Routes>
                     </BrowserRouter>
@@ -63,8 +63,7 @@ export default function App() {
     );
 }
 
-const VisualisePageWrapper = () => {
-    const { id } = useParams<{ id?: string }>();
+const VedtakExplorerWrapper = () => {
     return (
         <Suspense
             fallback={
@@ -73,7 +72,7 @@ const VisualisePageWrapper = () => {
                 </div>
             }
         >
-            <VisualisePage id={id} />
+            <VedtakExplorer />
         </Suspense>
     );
 };
