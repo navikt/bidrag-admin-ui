@@ -13,7 +13,7 @@ import { BEHANDLING_API_V1 } from "../../constants/api";
 import PageWrapper from "../PageWrapper";
 mermaid.initialize({
     startOnLoad: true,
-    flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis", nodeSpacing: 20 },
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis", nodeSpacing: 5 },
 });
 
 interface VisualiserVedtakGraphProps {
