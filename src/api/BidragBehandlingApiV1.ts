@@ -57,11 +57,11 @@ export interface Behandling {
     sivilstand: Sivilstand[];
     deleted: boolean;
     grunnlagListe: GrunnlagEntity[];
-    søknadsbarn: Rolle[];
-    bidragsmottaker?: Rolle;
-    bidragspliktig?: Rolle;
     /** @format date */
     virkningstidspunktEllerSøktFomDato: string;
+    bidragspliktig?: Rolle;
+    søknadsbarn: Rolle[];
+    bidragsmottaker?: Rolle;
 }
 
 export enum Bostatuskode {
@@ -845,23 +845,19 @@ export interface OpprettRolleDto {
 
 /** BaseGrunnlag */
 export interface BaseGrunnlag {
+    /** Grunnlagstype */
     type: Grunnlagstype;
-    /** Referanse (unikt navn på grunnlaget) */
-    referanse: string;
-    /** Grunnlagsinnhold (generisk) */
-    innhold: JsonNode;
-    /** Referanse til personobjektet grunnlaget gjelder */
-    gjelderReferanse?: string;
     /** Liste over grunnlagsreferanser */
     grunnlagsreferanseListe: string[];
+    /** Referanse til personobjektet grunnlaget gjelder */
+    gjelderReferanse?: string;
+    /** Grunnlagsinnhold (generisk) */
+    innhold: JsonNode;
+    /** Referanse (unikt navn på grunnlaget) */
+    referanse: string;
 }
 
-export enum Beslutningstype {
-    AVVIST = "AVVIST",
-    STADFESTELSE = "STADFESTELSE",
-    ENDRING = "ENDRING",
-}
-
+/** Grunnlagstype */
 export enum Grunnlagstype {
     SAeRFRADRAG = "SÆRFRADRAG",
     SKATTEKLASSE = "SKATTEKLASSE",
@@ -916,63 +912,21 @@ export enum Grunnlagstype {
     INNHENTET_INNTEKT_UTVIDETBARNETRYGD_PERIODE = "INNHENTET_INNTEKT_UTVIDETBARNETRYGD_PERIODE",
 }
 
-export enum Innkrevingstype {
-    MED_INNKREVING = "MED_INNKREVING",
-    UTEN_INNKREVING = "UTEN_INNKREVING",
-}
-
 /** Grunnlagsinnhold (generisk) */
 export type JsonNode = object;
+
+export type POJONode = object;
 
 export interface TreeChild {
     name: string;
     id: string;
     type: TreeChildTypeEnum;
     children: TreeChild[];
+    innhold?: POJONode;
+    /** Grunnlagstype */
+    grunnlagstype?: Grunnlagstype;
     /** BaseGrunnlag */
     grunnlag?: BaseGrunnlag;
-    periode?: TreePeriode;
-    stønad?: TreeStonad;
-    vedtak?: TreeVedtak;
-    grunnlagstype?: Grunnlagstype;
-}
-
-export interface TreePeriode {
-    beløp?: number;
-    valutakode?: string;
-    resultatkode: string;
-    delytelseId?: string;
-}
-
-export interface TreeStonad {
-    type: Stonadstype;
-    sak: string;
-    skyldner: string;
-    kravhaver: string;
-    mottaker: string;
-    /** @format int32 */
-    førsteIndeksreguleringsår?: number;
-    innkreving: Innkrevingstype;
-    beslutning: Beslutningstype;
-    /** @format int32 */
-    omgjørVedtakId?: number;
-    eksternReferanse?: string;
-}
-
-export interface TreeVedtak {
-    kilde: TreeVedtakKildeEnum;
-    type: Vedtakstype;
-    opprettetAv: string;
-    opprettetAvNavn?: string;
-    kildeapplikasjon: string;
-    /** @format date-time */
-    vedtakstidspunkt: string;
-    enhetsnummer?: string;
-    /** @format date */
-    innkrevingUtsattTilDato?: string;
-    fastsattILand?: string;
-    /** @format date-time */
-    opprettetTidspunkt: string;
 }
 
 export interface SivilstandGrunnlagDto {
@@ -1592,6 +1546,7 @@ export interface BeregnetForskuddResultat {
 export interface GrunnlagDto {
     /** Referanse (unikt navn på grunnlaget) */
     referanse: string;
+    /** Grunnlagstype */
     type: Grunnlagstype;
     /** Grunnlagsinnhold (generisk) */
     innhold: JsonNode;
@@ -1810,15 +1765,11 @@ export interface Virkningstidspunkt {
 }
 
 export enum TreeChildTypeEnum {
+    FRITTSTAENDE = "FRITTSTÅENDE",
     VEDTAK = "VEDTAK",
     STONADSENDRING = "STØNADSENDRING",
     PERIODE = "PERIODE",
     GRUNNLAG = "GRUNNLAG",
-}
-
-export enum TreeVedtakKildeEnum {
-    MANUELT = "MANUELT",
-    AUTOMATISK = "AUTOMATISK",
 }
 
 export enum SivilstandBeregnetStatusEnum {

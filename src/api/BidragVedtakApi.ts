@@ -289,70 +289,28 @@ export interface TypeArManedsperiode {
 export interface BaseGrunnlag {
     /** Grunnlagstype */
     type: Grunnlagstype;
-    /** Referanse til personobjektet grunnlaget gjelder */
-    gjelderReferanse?: string;
-    /** Referanse (unikt navn på grunnlaget) */
-    referanse: string;
-    /** Grunnlagsinnhold (generisk) */
-    innhold: JsonNode;
     /** Liste over grunnlagsreferanser */
     grunnlagsreferanseListe: string[];
+    /** Referanse til personobjektet grunnlaget gjelder */
+    gjelderReferanse?: string;
+    /** Grunnlagsinnhold (generisk) */
+    innhold: JsonNode;
+    /** Referanse (unikt navn på grunnlaget) */
+    referanse: string;
 }
+
+export type POJONode = object;
 
 export interface TreeChild {
     name: string;
     id: string;
     type: TreeChildTypeEnum;
     children: TreeChild[];
-    /** BaseGrunnlag */
-    grunnlag?: BaseGrunnlag;
-    periode?: TreePeriode;
-    stønad?: TreeStonad;
-    vedtak?: TreeVedtak;
+    innhold?: POJONode;
     /** Grunnlagstype */
     grunnlagstype?: Grunnlagstype;
-}
-
-export interface TreePeriode {
-    beløp?: number;
-    valutakode?: string;
-    resultatkode: string;
-    delytelseId?: string;
-}
-
-export interface TreeStonad {
-    /** Stønadstype */
-    type: Stonadstype;
-    sak: string;
-    skyldner: string;
-    kravhaver: string;
-    mottaker: string;
-    /** @format int32 */
-    førsteIndeksreguleringsår?: number;
-    /** Angir om engangsbeløpet skal innkreves */
-    innkreving: Innkrevingstype;
-    /** Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endringGyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING' */
-    beslutning: Beslutningstype;
-    /** @format int32 */
-    omgjørVedtakId?: number;
-    eksternReferanse?: string;
-}
-
-export interface TreeVedtak {
-    kilde: TreeVedtakKildeEnum;
-    /** Type vedtak */
-    type: Vedtakstype;
-    opprettetAv: string;
-    opprettetAvNavn?: string;
-    kildeapplikasjon: string;
-    /** @format date-time */
-    vedtakstidspunkt: string;
-    enhetsnummer?: string;
-    /** @format date */
-    innkrevingUtsattTilDato?: string;
-    fastsattILand?: string;
-    /** @format date-time */
-    opprettetTidspunkt: string;
+    /** BaseGrunnlag */
+    grunnlag?: BaseGrunnlag;
 }
 
 export interface OpprettVedtakResponseDto {
@@ -532,11 +490,6 @@ export enum TreeChildTypeEnum {
     STONADSENDRING = "STØNADSENDRING",
     PERIODE = "PERIODE",
     GRUNNLAG = "GRUNNLAG",
-}
-
-export enum TreeVedtakKildeEnum {
-    MANUELT = "MANUELT",
-    AUTOMATISK = "AUTOMATISK",
 }
 
 /** Hva er kilden til vedtaket. Automatisk eller manuelt */

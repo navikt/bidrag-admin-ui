@@ -261,15 +261,11 @@ function toEchartData(tree: TreeChild) {
     };
     return {
         name: tree.name,
-        value: tree.grunnlag?.innhold
-            ? JSON.stringify(tree.grunnlag?.innhold, null, 2)
-            : tree.periode
-              ? JSON.stringify(tree.periode, null, 2)
-              : tree.stønad
-                ? JSON.stringify(tree.stønad, null, 2)
-                : tree.vedtak
-                  ? JSON.stringify(tree.vedtak, null, 2)
-                  : "",
+        value: tree.grunnlag
+            ? JSON.stringify(tree?.grunnlag?.innhold, null, 2)
+            : tree?.innhold
+              ? JSON.stringify(tree?.innhold, null, 2)
+              : "",
         itemStyle: {
             borderType: getBordertype(),
         },
