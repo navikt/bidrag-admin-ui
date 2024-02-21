@@ -150,6 +150,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
             .render("mermaidSvg", data, divRef.current)
             .then((res) => {
                 divRef.current.innerHTML = res.svg;
+                console.log(res.bindFunctions);
                 svgPanZoom("#mermaidSvg");
                 if (res.bindFunctions) {
                     res.bindFunctions(divRef.current);
