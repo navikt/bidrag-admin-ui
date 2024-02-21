@@ -18,22 +18,6 @@ module.exports = {
     resolve: {
         extensions: [".tsx", ".ts", ".js", ".jsx"],
     },
-    optimization: {
-        minimizer: [
-            new EsbuildPlugin({
-                target: "ESNext",
-                minify: false,
-                format: "esm",
-                sourcemap: true,
-                minifyIdentifiers: false,
-                minifyWhitespace: true,
-                minifySyntax: true,
-                globalName: "bidrag_admin_ui",
-                css: true,
-                keepNames: true,
-            }),
-        ],
-    },
     module: {
         rules: [
             {
