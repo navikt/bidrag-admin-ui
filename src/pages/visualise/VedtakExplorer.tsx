@@ -180,20 +180,18 @@ function toEchart(tree: TreeChild): EChartsOption {
         tooltip: {
             trigger: "item",
             triggerOn: "mousemove",
+            enterable: true,
+            hideDelay: 500,
+            extraCssText: "max-height: 800px; max-width: 1000px; overflow: auto;",
+            position: function (pos, params, dom, rect, size) {
+                // tooltip will be fixed on the right if mouse hovering on the left,
+                // and on the left if hovering on the right.
+                const obj = { ...pos, top: 40, right: 20 };
+                obj[["left", "right"][+(pos[0] > size.viewSize[0] / 2)]] = 50;
+                return obj;
+            },
         },
         roam: true,
-        legend: {
-            top: "2%",
-            left: "3%",
-            orient: "vertical",
-            data: [
-                {
-                    name: "Vedtak",
-                    icon: "rectangle",
-                },
-            ],
-            borderColor: "#c23531",
-        },
         series: [
             {
                 type: "tree",
@@ -276,17 +274,22 @@ function toEchartData(tree: TreeChild) {
         },
 
         tooltip: {
-            position: () => {
-                if (tree.grunnlagstype == Grunnlagstype.NOTAT) {
-                    return "bottom";
-                }
-                return "right";
-            },
             formatter: (v) => {
-                return `<strong>${v.name}</strong>:
+                return `
+                <strong style="font-size: 18px">${v.name}</strong>:
                 <br/>
-                gjelder: ${tree.grunnlag?.gjelderReferanse}
-                <br/><br/>
+                ${
+                    tree.grunnlag
+                        ? `
+                        <dl>
+                            <dt>Gjelder</dt>
+                            <dd>${tree.grunnlag?.gjelderReferanse}</dd>
+                            <dt>Grunnlagstype</dt>
+                            <dd>${tree.grunnlag?.type}</dd>
+                        </dl>
+                <br/>`
+                        : ""
+                }
                 <pre>${v.value.replaceAll("\\n", "\n")}</pre>`;
             },
         },
