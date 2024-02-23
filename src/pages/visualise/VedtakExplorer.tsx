@@ -1,9 +1,10 @@
 import "./VedtakExplorer.css";
 
-import { Heading, Loader, Search, Switch, Tabs } from "@navikt/ds-react";
+import { Alert, Heading, Loader, Modal, Search, Switch, Tabs } from "@navikt/ds-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import mermaid from "mermaid";
 import React, { Suspense, useEffect, useRef, useState } from "react";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useSearchParams } from "react-router-dom";
 import svgPanZoom from "svg-pan-zoom";
 
@@ -14,7 +15,8 @@ import PageWrapper from "../PageWrapper";
 import missingImg from "./missing.jpeg";
 mermaid.initialize({
     startOnLoad: true,
-    flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis", nodeSpacing: 5 },
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis" },
+    securityLevel: "loose",
 });
 
 interface VedtakExplorerGraphProps {
@@ -113,52 +115,141 @@ function VisualiserVedtakGraph({ behandlingId, vedtakId }: VedtakExplorerGraphPr
                 <Tabs.Tab label="Flowchart" value="flowchart" />
                 <Tabs.Tab label="Tregraph" value="treegraph" />
             </Tabs.List>
-            <Suspense
-                fallback={
-                    <div className="flex justify-center">
-                        <Loader size="3xlarge" title="venter..." variant="interaction" />
-                    </div>
-                }
+            <ErrorBoundary
+                fallbackRender={(props: FallbackProps) => {
+                    return (
+                        <Alert size="small" variant="error">
+                            Kunne ikke hente {behandlingId ? "behandling" : "vedtak"} med id {behandlingId ?? vedtakId}:{" "}
+                            {props.error.message}
+                        </Alert>
+                    );
+                }}
             >
-                <Tabs.Panel value={"flowchart"}>
-                    {state == "flowchart" && <VedtakMermaidFlowChart behandlingId={behandlingId} vedtakId={vedtakId} />}
-                </Tabs.Panel>
-                <Tabs.Panel value={"treegraph"}>
-                    <VedtakTreeGraph behandlingId={behandlingId} vedtakId={vedtakId} />
-                </Tabs.Panel>
-            </Suspense>
+                <Suspense
+                    fallback={
+                        <div className="flex justify-center">
+                            <Loader size="3xlarge" title="venter..." variant="interaction" />
+                        </div>
+                    }
+                >
+                    <Tabs.Panel value={"flowchart"}>
+                        {state == "flowchart" && (
+                            <VedtakMermaidFlowChart behandlingId={behandlingId} vedtakId={vedtakId} />
+                        )}
+                    </Tabs.Panel>
+                    <Tabs.Panel value={"treegraph"}>
+                        <VedtakTreeGraph behandlingId={behandlingId} vedtakId={vedtakId} />
+                    </Tabs.Panel>
+                </Suspense>
+            </ErrorBoundary>
         </Tabs>
     );
 }
 
+interface VedtakDetaljer {
+    tittel: string;
+    innhold: Object;
+    type?: string;
+    gjelderReferanse?: string;
+}
 function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
     const { data } = useSuspenseQuery({
         queryKey: ["mermaid", behandlingId, vedtakId],
         queryFn: () => {
-            console.log(behandlingId, vedtakId);
             if (behandlingId) {
+                // Used for debugging. Only used to check network log
+                BEHANDLING_API_V1.api.vedtakTilMermaidText(Number(behandlingId));
                 return BEHANDLING_API_V1.api.vedtakTilMermaid(Number(behandlingId));
             }
+            BIDRAG_VEDTAK_API.vedtak.vedtakTilMermaidText(Number(behandlingId));
             return BIDRAG_VEDTAK_API.vedtak.vedtakTilMermaid(Number(vedtakId));
         },
         select: (data) => data.data,
     });
 
+    const isRendering = useRef(false);
+    const [showDetails, setShowDetails] = useState<VedtakDetaljer | null>(null);
     const divRef = useRef<HTMLDivElement>();
     useEffect(() => {
+        window.callback = (id) => {
+            console.log("CALLBACK", id);
+            setShowDetails(getDetailsById(id));
+        };
+    }, []);
+
+    function getDetailsById(id: string): VedtakDetaljer {
+        const grunnlag = data.grunnlagListe.find((d) => d.referanse == id);
+        if (grunnlag)
+            return {
+                tittel: grunnlag.referanse,
+                innhold: grunnlag.innhold,
+                gjelderReferanse: grunnlag.gjelderReferanse,
+                type: grunnlag.type,
+            };
+        if (data.vedtak.nodeId == id)
+            return {
+                tittel: data.vedtak.nodeId,
+                innhold: data.vedtak,
+            };
+        const stønadsendring = data.stønadsendringer.find((d) => d.nodeId == id);
+        if (stønadsendring)
+            return {
+                tittel: stønadsendring.nodeId,
+                innhold: stønadsendring,
+            };
+
+        const periode = data.perioder.find((d) => d.nodeId == id);
+        if (periode)
+            return {
+                tittel: periode.nodeId,
+                innhold: periode,
+            };
+    }
+    useEffect(() => {
+        console.log("RENDER");
+        if (isRendering.current) return;
+        isRendering.current = true;
         mermaid
-            .render("mermaidSvg", data, divRef.current)
+            .render("mermaidSvg", data.mermaidGraph, divRef.current)
             .then((res) => {
                 divRef.current.innerHTML = res.svg;
-                console.log(res.bindFunctions);
-                svgPanZoom("#mermaidSvg");
                 if (res.bindFunctions) {
-                    res.bindFunctions(divRef.current);
+                    res.bindFunctions(divRef.current.firstElementChild);
                 }
+                svgPanZoom("#mermaidSvg");
+                isRendering.current = false;
             })
-            .catch((e) => console.error(e));
+            .catch((e) => console.error("HERE", e));
     }, [data]);
-    return <div ref={divRef} className="mermaid h-full" />;
+    return (
+        <>
+            {/* {<Popover open={openState} onClose={() => setOpenState(false)} anchorEl={buttonRef.current}>
+                <Popover.Content>Innhold her!</Popover.Content>
+            </Popover>} */}
+            <Modal
+                style={{ maxHeight: "1000px", maxWidth: "max-content" }}
+                open={showDetails != null}
+                header={{ heading: showDetails?.tittel, size: "medium", closeButton: false }}
+                closeOnBackdropClick
+                onClose={() => setShowDetails(null)}
+            >
+                <Modal.Body>
+                    {showDetails?.type && (
+                        <dl>
+                            <dt>Gjelder</dt>
+                            <dd>{showDetails?.gjelderReferanse}</dd>
+                            <dt>Grunnlagstype</dt>
+                            <dd>{showDetails?.type}</dd>
+                        </dl>
+                    )}
+                    <pre style={{ maxHeight: "800px", overflow: "auto" }}>
+                        {JSON.stringify(showDetails?.innhold, null, 2)}
+                    </pre>
+                </Modal.Body>
+            </Modal>
+            <div ref={divRef} className="mermaid h-full" />
+        </>
+    );
 }
 
 function VedtakTreeGraph({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
@@ -186,8 +277,8 @@ function toEchart(tree: TreeChild): EChartsOption {
             position: function (pos, params, dom, rect, size) {
                 // tooltip will be fixed on the right if mouse hovering on the left,
                 // and on the left if hovering on the right.
-                const obj = { ...pos, top: 40, right: 20 };
-                obj[["left", "right"][+(pos[0] > size.viewSize[0] / 2)]] = 50;
+                const obj = { ...pos, top: 40 };
+                // obj[["left", "right"][+(pos[0] > size.viewSize[0] / 2)]] = 50;
                 return obj;
             },
         },

@@ -57,11 +57,11 @@ export interface Behandling {
     sivilstand: Sivilstand[];
     deleted: boolean;
     grunnlagListe: GrunnlagEntity[];
+    bidragsmottaker?: Rolle;
+    søknadsbarn: Rolle[];
+    bidragspliktig?: Rolle;
     /** @format date */
     virkningstidspunktEllerSøktFomDato: string;
-    bidragspliktig?: Rolle;
-    søknadsbarn: Rolle[];
-    bidragsmottaker?: Rolle;
 }
 
 export enum Bostatuskode {
@@ -847,14 +847,20 @@ export interface OpprettRolleDto {
 export interface BaseGrunnlag {
     /** Grunnlagstype */
     type: Grunnlagstype;
-    /** Liste over grunnlagsreferanser */
-    grunnlagsreferanseListe: string[];
-    /** Referanse til personobjektet grunnlaget gjelder */
-    gjelderReferanse?: string;
     /** Grunnlagsinnhold (generisk) */
     innhold: JsonNode;
     /** Referanse (unikt navn på grunnlaget) */
     referanse: string;
+    /** Referanse til personobjektet grunnlaget gjelder */
+    gjelderReferanse?: string;
+    /** Liste over grunnlagsreferanser */
+    grunnlagsreferanseListe: string[];
+}
+
+export enum Beslutningstype {
+    AVVIST = "AVVIST",
+    STADFESTELSE = "STADFESTELSE",
+    ENDRING = "ENDRING",
 }
 
 /** Grunnlagstype */
@@ -891,6 +897,7 @@ export enum Grunnlagstype {
     NOTAT = "NOTAT",
     SLUTTBEREGNING_FORSKUDD = "SLUTTBEREGNING_FORSKUDD",
     DELBEREGNING_INNTEKT = "DELBEREGNING_INNTEKT",
+    DELBEREGNING_SUM_INNTEKT = "DELBEREGNING_SUM_INNTEKT",
     DELBEREGNING_BARN_I_HUSSTAND = "DELBEREGNING_BARN_I_HUSSTAND",
     PERSON = "PERSON",
     PERSON_BIDRAGSMOTTAKER = "PERSON_BIDRAGSMOTTAKER",
@@ -903,17 +910,85 @@ export enum Grunnlagstype {
     INNHENTET_SIVILSTAND = "INNHENTET_SIVILSTAND",
     INNHENTET_ARBEIDSFORHOLD = "INNHENTET_ARBEIDSFORHOLD",
     INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE = "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
-    INNHENTET_INNTEKT_AORDNING_PERIODE = "INNHENTET_INNTEKT_AORDNING_PERIODE",
-    INNHENTET_INNTEKT_BARNETILLEGG_PERIODE = "INNHENTET_INNTEKT_BARNETILLEGG_PERIODE",
-    INNHENTETINNTEKTKONTANTSTOTTEPERIODE = "INNHENTET_INNTEKT_KONTANTSTØTTE_PERIODE",
-    INNHENTET_INNTEKT_AINNTEKT_PERIODE = "INNHENTET_INNTEKT_AINNTEKT_PERIODE",
-    INNHENTET_INNTEKT_BARNETILSYN_PERIODE = "INNHENTET_INNTEKT_BARNETILSYN_PERIODE",
-    INNHENTETINNTEKTSMABARNSTILLEGGPERIODE = "INNHENTET_INNTEKT_SMÅBARNSTILLEGG_PERIODE",
-    INNHENTET_INNTEKT_UTVIDETBARNETRYGD_PERIODE = "INNHENTET_INNTEKT_UTVIDETBARNETRYGD_PERIODE",
+    INNHENTET_INNTEKT_AORDNING = "INNHENTET_INNTEKT_AORDNING",
+    INNHENTET_INNTEKT_BARNETILLEGG = "INNHENTET_INNTEKT_BARNETILLEGG",
+    INNHENTETINNTEKTKONTANTSTOTTE = "INNHENTET_INNTEKT_KONTANTSTØTTE",
+    INNHENTET_INNTEKT_AINNTEKT = "INNHENTET_INNTEKT_AINNTEKT",
+    INNHENTET_INNTEKT_BARNETILSYN = "INNHENTET_INNTEKT_BARNETILSYN",
+    INNHENTETINNTEKTSMABARNSTILLEGG = "INNHENTET_INNTEKT_SMÅBARNSTILLEGG",
+    INNHENTET_INNTEKT_UTVIDETBARNETRYGD = "INNHENTET_INNTEKT_UTVIDETBARNETRYGD",
+}
+
+export enum Innkrevingstype {
+    MED_INNKREVING = "MED_INNKREVING",
+    UTEN_INNKREVING = "UTEN_INNKREVING",
 }
 
 /** Grunnlagsinnhold (generisk) */
 export type JsonNode = object;
+
+export interface MermaidResponse {
+    mermaidGraph: string;
+    vedtak: TreeVedtak;
+    stønadsendringer: TreeStonad[];
+    perioder: TreePeriode[];
+    grunnlagListe: BaseGrunnlag[];
+}
+
+export interface TreePeriode {
+    nodeId: string;
+    beløp?: number;
+    valutakode?: string;
+    resultatkode: string;
+    delytelseId?: string;
+}
+
+export interface TreeStonad {
+    nodeId: string;
+    type: Stonadstype;
+    sak: string;
+    skyldner: string;
+    kravhaver: string;
+    mottaker: string;
+    /** @format int32 */
+    førsteIndeksreguleringsår?: number;
+    innkreving: Innkrevingstype;
+    beslutning: Beslutningstype;
+    /** @format int32 */
+    omgjørVedtakId?: number;
+    eksternReferanse?: string;
+}
+
+export interface TreeVedtak {
+    nodeId: string;
+    kilde: TreeVedtakKildeEnum;
+    type: Vedtakstype;
+    opprettetAv: string;
+    opprettetAvNavn?: string;
+    kildeapplikasjon: string;
+    /** @format date-time */
+    vedtakstidspunkt: string;
+    enhetsnummer?: string;
+    /** @format date */
+    innkrevingUtsattTilDato?: string;
+    fastsattILand?: string;
+    /** @format date-time */
+    opprettetTidspunkt: string;
+}
+
+/** Grunnlag */
+export interface GrunnlagDto {
+    /** Referanse (unikt navn på grunnlaget) */
+    referanse: string;
+    /** Grunnlagstype */
+    type: Grunnlagstype;
+    /** Grunnlagsinnhold (generisk) */
+    innhold: JsonNode;
+    /** Liste over grunnlagsreferanser */
+    grunnlagsreferanseListe: string[];
+    /** Referanse til personobjektet grunnlaget gjelder */
+    gjelderReferanse?: string;
+}
 
 export type POJONode = object;
 
@@ -923,10 +998,10 @@ export interface TreeChild {
     type: TreeChildTypeEnum;
     children: TreeChild[];
     innhold?: POJONode;
+    /** Grunnlag */
+    grunnlag?: GrunnlagDto;
     /** Grunnlagstype */
     grunnlagstype?: Grunnlagstype;
-    /** BaseGrunnlag */
-    grunnlag?: BaseGrunnlag;
 }
 
 export interface SivilstandGrunnlagDto {
@@ -1542,20 +1617,6 @@ export interface BeregnetForskuddResultat {
     grunnlagListe: GrunnlagDto[];
 }
 
-/** Grunnlag */
-export interface GrunnlagDto {
-    /** Referanse (unikt navn på grunnlaget) */
-    referanse: string;
-    /** Grunnlagstype */
-    type: Grunnlagstype;
-    /** Grunnlagsinnhold (generisk) */
-    innhold: JsonNode;
-    /** Liste over grunnlagsreferanser */
-    grunnlagsreferanseListe: string[];
-    /** Referanse til personobjektet grunnlaget gjelder */
-    gjelderReferanse?: string;
-}
-
 /** Resultatet av en beregning */
 export interface ResultatBeregning {
     /** Resultat beløp */
@@ -1762,6 +1823,11 @@ export interface Virkningstidspunkt {
     /** @format date */
     virkningstidspunkt?: string;
     notat: Notat;
+}
+
+export enum TreeVedtakKildeEnum {
+    MANUELT = "MANUELT",
+    AUTOMATISK = "AUTOMATISK",
 }
 
 export enum TreeChildTypeEnum {
@@ -2111,7 +2177,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @secure
          */
         vedtakTilMermaid: (behandlingId: number, params: RequestParams = {}) =>
-            this.request<string, any>({
+            this.request<MermaidResponse, any>({
                 path: `/api/v2/vedtak/mermaid/${behandlingId}`,
                 method: "POST",
                 secure: true,
@@ -2322,6 +2388,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
                 body: data,
                 secure: true,
                 type: ContentType.Json,
+                format: "json",
+                ...params,
+            }),
+
+        /**
+         * No description
+         *
+         * @tags vedtak-graph-controller
+         * @name VedtakTilMermaidText
+         * @request GET:/api/v2/vedtak/mermaid/{behandlingId}/text
+         * @secure
+         */
+        vedtakTilMermaidText: (behandlingId: number, params: RequestParams = {}) =>
+            this.request<string, any>({
+                path: `/api/v2/vedtak/mermaid/${behandlingId}/text`,
+                method: "GET",
+                secure: true,
                 format: "json",
                 ...params,
             }),
