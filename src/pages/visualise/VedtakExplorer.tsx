@@ -1,6 +1,6 @@
 import "./VedtakExplorer.css";
 
-import { Alert, Heading, Loader, Modal, Search, Switch, Tabs } from "@navikt/ds-react";
+import { Alert, Button, CopyButton, Heading, Loader, Modal, Search, Switch, Tabs } from "@navikt/ds-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import mermaid from "mermaid";
 import React, { Suspense, useEffect, useRef, useState } from "react";
@@ -8,11 +8,14 @@ import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useSearchParams } from "react-router-dom";
 import svgPanZoom from "svg-pan-zoom";
 
-import { Grunnlagstype, TreeChild, TreeChildTypeEnum } from "../../api/BidragBehandlingApiV1";
+import { Grunnlagstype, TreeChild, TreeChildTypeEnum, VedtakDto } from "../../api/BidragBehandlingApiV1";
 import { EChartsOption, ReactECharts } from "../../components/e-charts/ReactECharts";
 import { BEHANDLING_API_V1, BIDRAG_VEDTAK_API } from "../../constants/api";
 import PageWrapper from "../PageWrapper";
 import missingImg from "./missing.jpeg";
+import { vedtakToMermaidResponse } from "./TreeToMermaidMapper";
+import { mapVedtakToTree } from "./VedtakToGraphMapper";
+import { lastVisningsnavn } from "./VisningsnavnMapper";
 mermaid.initialize({
     startOnLoad: true,
     flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis" },
@@ -25,6 +28,7 @@ interface VedtakExplorerGraphProps {
 }
 
 export default () => {
+    lastVisningsnavn();
     return (
         <PageWrapper name="">
             <VedtakExplorer />
@@ -153,24 +157,31 @@ interface VedtakDetaljer {
     gjelderReferanse?: string;
 }
 function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
-    const { data } = useSuspenseQuery({
+    const [searchParams] = useSearchParams();
+    const {
+        //@ts-ignore
+        data: { mermaid, vedtak },
+    } = useSuspenseQuery({
         queryKey: ["mermaid", behandlingId, vedtakId],
-        queryFn: () => {
-            if (behandlingId) {
-                // Used for debugging. Only used to check network log
-                BEHANDLING_API_V1.api.vedtakTilMermaidText(Number(behandlingId));
-                return BEHANDLING_API_V1.api.vedtakTilMermaid(Number(behandlingId));
+        queryFn: async () => {
+            if (searchParams.get("backend") == "true") {
+                if (behandlingId) {
+                    return BEHANDLING_API_V1.api.vedtakTilMermaid(Number(behandlingId));
+                }
+                return BIDRAG_VEDTAK_API.vedtak.vedtakTilMermaid(Number(vedtakId));
             }
-            BIDRAG_VEDTAK_API.vedtak.vedtakTilMermaidText(Number(behandlingId));
-            return BIDRAG_VEDTAK_API.vedtak.vedtakTilMermaid(Number(vedtakId));
+            const vedtakDto = await hentVedtakDto(behandlingId, vedtakId);
+            const mermaidResponse = vedtakToMermaidResponse(vedtakDto.data);
+            console.log(mermaidResponse.mermaidGraph);
+            return { mermaid: mermaidResponse, vedtak: vedtakDto };
         },
-        select: (data) => data.data,
     });
 
     const isRendering = useRef(false);
     const [showDetails, setShowDetails] = useState<VedtakDetaljer | null>(null);
     const divRef = useRef<HTMLDivElement>();
     useEffect(() => {
+        // @ts-ignore
         window.callback = (id) => {
             console.log("CALLBACK", id);
             setShowDetails(getDetailsById(id));
@@ -178,7 +189,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
     }, []);
 
     function getDetailsById(id: string): VedtakDetaljer {
-        const grunnlag = data.grunnlagListe.find((d) => d.referanse == id);
+        const grunnlag = mermaid.grunnlagListe.find((d) => d.referanse == id);
         if (grunnlag)
             return {
                 tittel: grunnlag.referanse,
@@ -186,19 +197,19 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
                 gjelderReferanse: grunnlag.gjelderReferanse,
                 type: grunnlag.type,
             };
-        if (data.vedtak.nodeId == id)
+        if (mermaid.vedtak.nodeId == id)
             return {
-                tittel: data.vedtak.nodeId,
-                innhold: data.vedtak,
+                tittel: mermaid.vedtak.nodeId,
+                innhold: mermaid.vedtak,
             };
-        const stønadsendring = data.stønadsendringer.find((d) => d.nodeId == id);
+        const stønadsendring = mermaid.stønadsendringer.find((d) => d.nodeId == id);
         if (stønadsendring)
             return {
                 tittel: stønadsendring.nodeId,
                 innhold: stønadsendring,
             };
 
-        const periode = data.perioder.find((d) => d.nodeId == id);
+        const periode = mermaid.perioder.find((d) => d.nodeId == id);
         if (periode)
             return {
                 tittel: periode.nodeId,
@@ -206,11 +217,10 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
             };
     }
     useEffect(() => {
-        console.log("RENDER");
         if (isRendering.current) return;
         isRendering.current = true;
         mermaid
-            .render("mermaidSvg", data.mermaidGraph, divRef.current)
+            .render("mermaidSvg", mermaid.mermaidGraph, divRef.current)
             .then((res) => {
                 divRef.current.innerHTML = res.svg;
                 if (res.bindFunctions) {
@@ -220,12 +230,9 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
                 isRendering.current = false;
             })
             .catch((e) => console.error("HERE", e));
-    }, [data]);
+    }, [mermaid]);
     return (
         <>
-            {/* {<Popover open={openState} onClose={() => setOpenState(false)} anchorEl={buttonRef.current}>
-                <Popover.Content>Innhold her!</Popover.Content>
-            </Popover>} */}
             <Modal
                 style={{ maxHeight: "1000px", maxWidth: "max-content" }}
                 open={showDetails != null}
@@ -247,23 +254,46 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
                     </pre>
                 </Modal.Body>
             </Modal>
+            <div className="flex flex-row gap-4">
+                <ShowMermaidGraphButton mermaidGraph={mermaid.mermaidGraph} />
+                <ShowVedtakButton vedtak={vedtak} />
+            </div>
             <div ref={divRef} className="mermaid h-full" />
         </>
     );
 }
 
 function VedtakTreeGraph({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
-    const { data } = useSuspenseQuery({
+    const [searchParams, _] = useSearchParams();
+    const {
+        //@ts-ignore
+        data: { tree, vedtak },
+    } = useSuspenseQuery({
         queryKey: ["graph", behandlingId, vedtakId],
-        queryFn: () => {
-            if (behandlingId != null) {
-                return BEHANDLING_API_V1.api.vedtakTilTre(Number(behandlingId));
+        queryFn: async () => {
+            if (searchParams.get("backend") == "true") {
+                if (behandlingId != null) {
+                    return BEHANDLING_API_V1.api.vedtakTilTre(Number(behandlingId));
+                }
+                return BIDRAG_VEDTAK_API.vedtak.vedtakTilTre(Number(vedtakId));
             }
-            return BIDRAG_VEDTAK_API.vedtak.vedtakTilTre(Number(vedtakId));
+            const vedtakDto = await hentVedtakDto(behandlingId, vedtakId);
+            return { tree: mapVedtakToTree(vedtakDto.data), vedtak: vedtakDto };
         },
-        select: (data) => data.data,
     });
-    return <ReactECharts option={toEchart(data)} style={{ height: "calc(100% - 200px)", margin: "auto" }} />;
+    return (
+        <>
+            <ShowVedtakButton vedtak={vedtak} />
+            <ReactECharts option={toEchart(tree)} style={{ height: "calc(100% - 200px)", margin: "auto" }} />
+        </>
+    );
+}
+
+async function hentVedtakDto(behandlingId?: string, vedtakId?: string) {
+    if (behandlingId != null) {
+        return BEHANDLING_API_V1.api.behandlingTilVedtak(Number(behandlingId));
+    }
+    return BIDRAG_VEDTAK_API.vedtak.hentVedtak(Number(vedtakId));
 }
 
 function toEchart(tree: TreeChild): EChartsOption {
@@ -274,13 +304,13 @@ function toEchart(tree: TreeChild): EChartsOption {
             enterable: true,
             hideDelay: 500,
             extraCssText: "max-height: 800px; max-width: 1000px; overflow: auto;",
-            position: function (pos, params, dom, rect, size) {
-                // tooltip will be fixed on the right if mouse hovering on the left,
-                // and on the left if hovering on the right.
-                const obj = { ...pos, top: 40 };
-                // obj[["left", "right"][+(pos[0] > size.viewSize[0] / 2)]] = 50;
-                return obj;
-            },
+            // position: function (pos, params, dom, rect, size) {
+            //     // tooltip will be fixed on the right if mouse hovering on the left,
+            //     // and on the left if hovering on the right.
+            //     const obj = { ...pos, top: 40 };
+            //     obj[["left", "right"][+(pos[0] > size.viewSize[0] / 2)]] = 1000;
+            //     return obj;
+            // },
         },
         roam: true,
         series: [
@@ -387,4 +417,51 @@ function toEchartData(tree: TreeChild) {
         collapsed: tree.type == TreeChildTypeEnum.GRUNNLAG,
         children: tree.children.map(toEchartData),
     };
+}
+
+function ShowMermaidGraphButton({ mermaidGraph }: { mermaidGraph: string }) {
+    const [showGraph, setShowGraph] = useState(false);
+    return (
+        <>
+            <Button size="small" variant="tertiary-neutral" onClick={() => setShowGraph(!showGraph)}>
+                Vis mermaid kode
+            </Button>
+            <Modal
+                style={{ maxHeight: "1000px", maxWidth: "max-content" }}
+                open={showGraph}
+                header={{ heading: "Mermaid kode", size: "medium", closeButton: false }}
+                closeOnBackdropClick
+                onClose={() => setShowGraph(false)}
+            >
+                <Modal.Body>
+                    <CopyButton size="small" copyText={mermaidGraph} text="Kopier kode til utklippstavle"></CopyButton>
+                    <pre style={{ maxHeight: "800px", overflow: "auto" }}>{mermaidGraph}</pre>
+                </Modal.Body>
+            </Modal>
+        </>
+    );
+}
+
+function ShowVedtakButton({ vedtak }: { vedtak: VedtakDto }) {
+    const [showGraph, setShowGraph] = useState(false);
+    const vedtakString = JSON.stringify(vedtak, null, 2);
+    return (
+        <>
+            <Button size="small" variant="tertiary-neutral" onClick={() => setShowGraph(!showGraph)}>
+                Vis vedtak JSON
+            </Button>
+            <Modal
+                style={{ maxHeight: "1000px", maxWidth: "max-content" }}
+                open={showGraph}
+                header={{ heading: "Vedtak JSON", size: "medium", closeButton: false }}
+                closeOnBackdropClick
+                onClose={() => setShowGraph(false)}
+            >
+                <Modal.Body>
+                    <CopyButton size="small" copyText={vedtakString} text="Kopier til utklippstavle"></CopyButton>
+                    <pre style={{ maxHeight: "800px", overflow: "auto" }}>{JSON.stringify(vedtak, null, 2)}</pre>
+                </Modal.Body>
+            </Modal>
+        </>
+    );
 }

@@ -57,9 +57,9 @@ export interface Behandling {
     sivilstand: Sivilstand[];
     deleted: boolean;
     grunnlagListe: GrunnlagEntity[];
+    bidragspliktig?: Rolle;
     bidragsmottaker?: Rolle;
     søknadsbarn: Rolle[];
-    bidragspliktig?: Rolle;
     /** @format date */
     virkningstidspunktEllerSøktFomDato: string;
 }
@@ -160,6 +160,8 @@ export enum Inntektsrapportering {
     AINNTEKT = "AINNTEKT",
     AINNTEKTBEREGNET3MND = "AINNTEKT_BEREGNET_3MND",
     AINNTEKTBEREGNET12MND = "AINNTEKT_BEREGNET_12MND",
+    AINNTEKTBEREGNET3MNDFRAOPPRINNELIGVEDTAK = "AINNTEKT_BEREGNET_3MND_FRA_OPPRINNELIG_VEDTAK",
+    AINNTEKTBEREGNET12MNDFRAOPPRINNELIGVEDTAK = "AINNTEKT_BEREGNET_12MND_FRA_OPPRINNELIG_VEDTAK",
     KAPITALINNTEKT = "KAPITALINNTEKT",
     LIGNINGSINNTEKT = "LIGNINGSINNTEKT",
     KONTANTSTOTTE = "KONTANTSTØTTE",
@@ -896,7 +898,6 @@ export enum Grunnlagstype {
     VIRKNINGSTIDSPUNKT = "VIRKNINGSTIDSPUNKT",
     NOTAT = "NOTAT",
     SLUTTBEREGNING_FORSKUDD = "SLUTTBEREGNING_FORSKUDD",
-    DELBEREGNING_INNTEKT = "DELBEREGNING_INNTEKT",
     DELBEREGNING_SUM_INNTEKT = "DELBEREGNING_SUM_INNTEKT",
     DELBEREGNING_BARN_I_HUSSTAND = "DELBEREGNING_BARN_I_HUSSTAND",
     PERSON = "PERSON",
@@ -983,7 +984,7 @@ export interface GrunnlagDto {
     /** Grunnlagstype */
     type: Grunnlagstype;
     /** Grunnlagsinnhold (generisk) */
-    innhold: JsonNode;
+    innhold: any;
     /** Liste over grunnlagsreferanser */
     grunnlagsreferanseListe: string[];
     /** Referanse til personobjektet grunnlaget gjelder */
@@ -1673,6 +1674,147 @@ export interface ArbeidOgInntektLenkeRequest {
     ident: string;
 }
 
+/** Kilde/type for en behandlingsreferanse */
+export enum BehandlingsrefKilde {
+    BEHANDLING_ID = "BEHANDLING_ID",
+    BISYSSOKNAD = "BISYS_SØKNAD",
+    BISYSKLAGEREFSOKNAD = "BISYS_KLAGE_REF_SØKNAD",
+}
+
+/** Liste med referanser til alle behandlinger som ligger som grunnlag til vedtaket */
+export interface BehandlingsreferanseDto {
+    /** Kilde/type for en behandlingsreferanse */
+    kilde: BehandlingsrefKilde;
+    /** Kildesystemets referanse til behandlingen */
+    referanse: string;
+}
+
+/** Liste over alle engangsbeløp som inngår i vedtaket */
+export interface EngangsbelopDto {
+    type: Engangsbeloptype;
+    /** Referanse til sak */
+    sak: string;
+    /** Personidenten til den som skal betale engangsbeløpet */
+    skyldner: string;
+    /** Personidenten til den som krever engangsbeløpet */
+    kravhaver: string;
+    /** Personidenten til den som mottar engangsbeløpet */
+    mottaker: string;
+    /**
+     * Beregnet engangsbeløp
+     * @min 0
+     */
+    beløp?: number;
+    /** Valutakoden tilhørende engangsbeløpet */
+    valutakode: string;
+    /** Resultatkoden tilhørende engangsbeløpet */
+    resultatkode: string;
+    innkreving: Innkrevingstype;
+    beslutning: Beslutningstype;
+    /**
+     * Id for vedtaket det er klaget på. Utgjør sammen med referanse en unik id for et engangsbeløp
+     * @format int32
+     */
+    omgjørVedtakId?: number;
+    /** Referanse til engangsbeløp, brukes for å kunne omgjøre engangsbeløp senere i et klagevedtak. Unik innenfor et vedtak.Referansen er enten angitt i requesten for opprettelse av vedtak eller generert av bidrag-vedtak hvis den ikke var angitt i requesten. */
+    referanse: string;
+    /** Referanse - delytelsesId/beslutningslinjeId -> bidrag-regnskap. Skal fjernes senere */
+    delytelseId?: string;
+    /** Referanse som brukes i utlandssaker */
+    eksternReferanse?: string;
+    /** Liste over alle grunnlag som inngår i beregningen */
+    grunnlagReferanseListe: string[];
+}
+
+/** Liste over alle stønadsendringer som inngår i vedtaket */
+export interface StonadsendringDto {
+    type: Stonadstype;
+    /** Referanse til sak */
+    sak: string;
+    /** Personidenten til den som skal betale bidraget */
+    skyldner: string;
+    /** Personidenten til den som krever bidraget */
+    kravhaver: string;
+    /** Personidenten til den som mottar bidraget */
+    mottaker: string;
+    /**
+     * Angir første år en stønad skal indeksreguleres
+     * @format int32
+     */
+    førsteIndeksreguleringsår?: number;
+    innkreving: Innkrevingstype;
+    beslutning: Beslutningstype;
+    /**
+     * Id for vedtaket det er klaget på
+     * @format int32
+     */
+    omgjørVedtakId?: number;
+    /** Referanse som brukes i utlandssaker */
+    eksternReferanse?: string;
+    /** Liste over grunnlag som er knyttet direkte til stønadsendringen */
+    grunnlagReferanseListe: string[];
+    /** Liste over alle perioder som inngår i stønadsendringen */
+    periodeListe: VedtakPeriodeDto[];
+}
+
+export interface VedtakDto {
+    /** Hva er kilden til vedtaket. Automatisk eller manuelt */
+    kilde: VedtakDtoKildeEnum;
+    type: Vedtakstype;
+    /** Id til saksbehandler eller batchjobb som opprettet vedtaket. For saksbehandler er ident hentet fra token */
+    opprettetAv: string;
+    /** Saksbehandlers navn */
+    opprettetAvNavn?: string;
+    /** Navn på applikasjon som vedtaket er opprettet i */
+    kildeapplikasjon: string;
+    /**
+     * Tidspunkt/timestamp når vedtaket er fattet
+     * @format date-time
+     */
+    vedtakstidspunkt: string;
+    /** Enheten som er ansvarlig for vedtaket. Kan være null for feks batch */
+    enhetsnummer?: string;
+    /**
+     * Settes hvis overføring til Elin skal utsettes
+     * @format date
+     */
+    innkrevingUtsattTilDato?: string;
+    /** Settes hvis vedtaket er fastsatt i utlandet */
+    fastsattILand?: string;
+    /**
+     * Tidspunkt vedtaket er fattet
+     * @format date-time
+     */
+    opprettetTidspunkt: string;
+    /** Liste over alle grunnlag som inngår i vedtaket */
+    grunnlagListe: GrunnlagDto[];
+    /** Liste over alle stønadsendringer som inngår i vedtaket */
+    stønadsendringListe: StonadsendringDto[];
+    /** Liste over alle engangsbeløp som inngår i vedtaket */
+    engangsbeløpListe: EngangsbelopDto[];
+    /** Liste med referanser til alle behandlinger som ligger som grunnlag til vedtaket */
+    behandlingsreferanseListe: BehandlingsreferanseDto[];
+}
+
+/** Liste over alle perioder som inngår i stønadsendringen */
+export interface VedtakPeriodeDto {
+    /** Perioden inntekten gjelder for (fom-til) */
+    periode: TypeArManedsperiode;
+    /**
+     * Beregnet stønadsbeløp
+     * @min 0
+     */
+    beløp?: number;
+    /** Valutakoden tilhørende stønadsbeløpet */
+    valutakode?: string;
+    /** Resultatkoden tilhørende stønadsbeløpet */
+    resultatkode: string;
+    /** Referanse - delytelseId/beslutningslinjeId -> bidrag-regnskap. Skal fjernes senere */
+    delytelseId?: string;
+    /** Liste over alle grunnlag som inngår i perioden */
+    grunnlagReferanseListe: string[];
+}
+
 export interface Arbeidsforhold {
     /** Perioden inntekten gjelder for (fom-til) */
     periode: TypeArManedsperiode;
@@ -1908,6 +2050,12 @@ export enum InitalizeForsendelseRequestBehandlingStatusEnum {
     OPPRETTET = "OPPRETTET",
     ENDRET = "ENDRET",
     FEILREGISTRERT = "FEILREGISTRERT",
+}
+
+/** Hva er kilden til vedtaket. Automatisk eller manuelt */
+export enum VedtakDtoKildeEnum {
+    MANUELT = "MANUELT",
+    AUTOMATISK = "AUTOMATISK",
 }
 
 export enum VirkningstidspunktMonthEnum {
@@ -2403,6 +2551,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         vedtakTilMermaidText: (behandlingId: number, params: RequestParams = {}) =>
             this.request<string, any>({
                 path: `/api/v2/vedtak/mermaid/${behandlingId}/text`,
+                method: "GET",
+                secure: true,
+                format: "json",
+                ...params,
+            }),
+
+        /**
+         * No description
+         *
+         * @tags vedtak-graph-controller
+         * @name BehandlingTilVedtak
+         * @request GET:/api/v2/simulervedtak/{behandlingId}
+         * @secure
+         */
+        behandlingTilVedtak: (behandlingId: number, params: RequestParams = {}) =>
+            this.request<VedtakDto, any>({
+                path: `/api/v2/simulervedtak/${behandlingId}`,
                 method: "GET",
                 secure: true,
                 format: "json",
