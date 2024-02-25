@@ -65,7 +65,13 @@ function treeToMermaidString(tree: TreeChild) {
                 if (subgraphWithTopToBottomDirection.includes(key)) {
                     subgraphString += `\t\tdirection LR\n`;
                 }
-                return subgraphString + `${value.map((v) => `\t\t${v}\n`).join("")}\tend\n`;
+                return (
+                    subgraphString +
+                    `${value
+                        .sort((a, b) => (a.startsWith("Periode") ? a.localeCompare(b) : -1))
+                        .map((v) => `\t\t${v}\n`)
+                        .join("")}\tend\n`
+                );
             }
             return value.map((v) => `\t${v}\n`).join("");
         })
@@ -114,7 +120,12 @@ function mapGrunnlagToMermaid(
         grunnlagstyperNotIncludedInFlow.includes(tree.innhold?.type) ||
         tree.type == TreeChildType.FRITTSTÅENDE
     ) {
-        addToMap(mermaidSubgraphMap, tilSubgraph(tree), `${tree.id}["${tree.name}"]`);
+        if (
+            (tree.type == TreeChildType.FRITTSTÅENDE && tree.children.length > 0) ||
+            tree.type != TreeChildType.FRITTSTÅENDE
+        ) {
+            addToMap(mermaidSubgraphMap, tilSubgraph(tree), `${tree.id}["${tree.name}"]`);
+        }
     } else if (grunnlagstype == Grunnlagstype.SLUTTBEREGNING_FORSKUDD) {
         addToMap(
             mermaidSubgraphMap,

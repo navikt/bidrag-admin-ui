@@ -160,7 +160,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
     const [searchParams] = useSearchParams();
     const {
         //@ts-ignore
-        data: { mermaid, vedtak },
+        data: { mermaidResponse, vedtak },
     } = useSuspenseQuery({
         queryKey: ["mermaid", behandlingId, vedtakId],
         queryFn: async () => {
@@ -173,7 +173,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
             const vedtakDto = await hentVedtakDto(behandlingId, vedtakId);
             const mermaidResponse = vedtakToMermaidResponse(vedtakDto.data);
             console.log(mermaidResponse.mermaidGraph);
-            return { mermaid: mermaidResponse, vedtak: vedtakDto };
+            return { mermaidResponse: mermaidResponse, vedtak: vedtakDto };
         },
     });
 
@@ -189,7 +189,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
     }, []);
 
     function getDetailsById(id: string): VedtakDetaljer {
-        const grunnlag = mermaid.grunnlagListe.find((d) => d.referanse == id);
+        const grunnlag = mermaidResponse.grunnlagListe.find((d) => d.referanse == id);
         if (grunnlag)
             return {
                 tittel: grunnlag.referanse,
@@ -197,19 +197,19 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
                 gjelderReferanse: grunnlag.gjelderReferanse,
                 type: grunnlag.type,
             };
-        if (mermaid.vedtak.nodeId == id)
+        if (mermaidResponse.vedtak.nodeId == id)
             return {
-                tittel: mermaid.vedtak.nodeId,
-                innhold: mermaid.vedtak,
+                tittel: mermaidResponse.vedtak.nodeId,
+                innhold: mermaidResponse.vedtak,
             };
-        const stønadsendring = mermaid.stønadsendringer.find((d) => d.nodeId == id);
+        const stønadsendring = mermaidResponse.stønadsendringer.find((d) => d.nodeId == id);
         if (stønadsendring)
             return {
                 tittel: stønadsendring.nodeId,
                 innhold: stønadsendring,
             };
 
-        const periode = mermaid.perioder.find((d) => d.nodeId == id);
+        const periode = mermaidResponse.perioder.find((d) => d.nodeId == id);
         if (periode)
             return {
                 tittel: periode.nodeId,
@@ -220,7 +220,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
         if (isRendering.current) return;
         isRendering.current = true;
         mermaid
-            .render("mermaidSvg", mermaid.mermaidGraph, divRef.current)
+            .render("mermaidSvg", mermaidResponse.mermaidGraph, divRef.current)
             .then((res) => {
                 divRef.current.innerHTML = res.svg;
                 if (res.bindFunctions) {
@@ -255,7 +255,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
                 </Modal.Body>
             </Modal>
             <div className="flex flex-row gap-4">
-                <ShowMermaidGraphButton mermaidGraph={mermaid.mermaidGraph} />
+                <ShowMermaidGraphButton mermaidGraph={mermaidResponse.mermaidGraph} />
                 <ShowVedtakButton vedtak={vedtak} />
             </div>
             <div ref={divRef} className="mermaid h-full" />
@@ -264,7 +264,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
 }
 
 function VedtakTreeGraph({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
-    const [searchParams, _] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const {
         //@ts-ignore
         data: { tree, vedtak },
