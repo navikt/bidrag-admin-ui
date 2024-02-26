@@ -172,8 +172,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
             }
             const vedtakDto = await hentVedtakDto(behandlingId, vedtakId);
             const mermaidResponse = vedtakToMermaidResponse(vedtakDto.data);
-            console.log(mermaidResponse.mermaidGraph);
-            return { mermaidResponse: mermaidResponse, vedtak: vedtakDto };
+            return { mermaidResponse: mermaidResponse, vedtak: vedtakDto.data };
         },
     });
 
@@ -278,7 +277,7 @@ function VedtakTreeGraph({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
                 return BIDRAG_VEDTAK_API.vedtak.vedtakTilTre(Number(vedtakId));
             }
             const vedtakDto = await hentVedtakDto(behandlingId, vedtakId);
-            return { tree: mapVedtakToTree(vedtakDto.data), vedtak: vedtakDto };
+            return { tree: mapVedtakToTree(vedtakDto.data), vedtak: vedtakDto.data };
         },
     });
     return (
