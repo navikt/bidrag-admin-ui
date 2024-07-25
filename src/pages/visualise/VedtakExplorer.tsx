@@ -8,12 +8,13 @@ import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { useSearchParams } from "react-router-dom";
 import svgPanZoom from "svg-pan-zoom";
 
-import { Grunnlagstype, TreeChild, TreeChildTypeEnum, VedtakDto } from "../../api/BidragBehandlingApiV1";
+import { Grunnlagstype, VedtakDto } from "../../api/BidragBehandlingApiV1";
 import { EChartsOption, ReactECharts } from "../../components/e-charts/ReactECharts";
 import { BEHANDLING_API_V1, BIDRAG_VEDTAK_API } from "../../constants/api";
 import PageWrapper from "../PageWrapper";
 import missingImg from "./missing.jpeg";
 import { vedtakToMermaidResponse } from "./TreeToMermaidMapper";
+import { TreeChild, TreeChildType } from "./types";
 import { mapVedtakToTree } from "./VedtakToGraphMapper";
 import { lastVisningsnavn } from "./VisningsnavnMapper";
 mermaid.initialize({
@@ -157,19 +158,12 @@ interface VedtakDetaljer {
     gjelderReferanse?: string;
 }
 function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
-    const [searchParams] = useSearchParams();
     const {
         //@ts-ignore
         data: { mermaidResponse, vedtak },
     } = useSuspenseQuery({
         queryKey: ["mermaid", behandlingId, vedtakId],
         queryFn: async () => {
-            if (searchParams.get("backend") == "true") {
-                if (behandlingId) {
-                    return BEHANDLING_API_V1.api.vedtakTilMermaid(Number(behandlingId));
-                }
-                return BIDRAG_VEDTAK_API.vedtak.vedtakTilMermaid(Number(vedtakId));
-            }
             const vedtakDto = await hentVedtakDto(behandlingId, vedtakId);
             const mermaidResponse = vedtakToMermaidResponse(vedtakDto.data);
             return { mermaidResponse: mermaidResponse, vedtak: vedtakDto.data };
@@ -263,19 +257,12 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
 }
 
 function VedtakTreeGraph({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
-    const [searchParams] = useSearchParams();
     const {
         //@ts-ignore
         data: { tree, vedtak },
     } = useSuspenseQuery({
         queryKey: ["graph", behandlingId, vedtakId],
         queryFn: async () => {
-            if (searchParams.get("backend") == "true") {
-                if (behandlingId != null) {
-                    return BEHANDLING_API_V1.api.vedtakTilTre(Number(behandlingId));
-                }
-                return BIDRAG_VEDTAK_API.vedtak.vedtakTilTre(Number(vedtakId));
-            }
             const vedtakDto = await hentVedtakDto(behandlingId, vedtakId);
             return { tree: mapVedtakToTree(vedtakDto.data), vedtak: vedtakDto.data };
         },
@@ -413,7 +400,7 @@ function toEchartData(tree: TreeChild) {
                 <pre>${v.value.replaceAll("\\n", "\n")}</pre>`;
             },
         },
-        collapsed: tree.type == TreeChildTypeEnum.GRUNNLAG,
+        collapsed: tree.type == TreeChildType.GRUNNLAG,
         children: tree.children.map(toEchartData),
     };
 }

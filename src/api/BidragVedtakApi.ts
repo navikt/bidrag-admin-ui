@@ -23,7 +23,7 @@ export enum Beslutningstype {
     ENDRING = "ENDRING",
 }
 
-/** Beløpstype. Saertilskudd, gebyr m.m. */
+/** Beløpstype. Særbidrag, gebyr m.m. */
 export enum Engangsbeloptype {
     DIREKTE_OPPGJOR = "DIREKTE_OPPGJOR",
     DIREKTEOPPGJOR = "DIREKTE_OPPGJØR",
@@ -32,16 +32,16 @@ export enum Engangsbeloptype {
     GEBYR_MOTTAKER = "GEBYR_MOTTAKER",
     GEBYR_SKYLDNER = "GEBYR_SKYLDNER",
     INNKREVING_GJELD = "INNKREVING_GJELD",
+    TILBAKEKREVING = "TILBAKEKREVING",
     SAERTILSKUDD = "SAERTILSKUDD",
     SAeRTILSKUDD = "SÆRTILSKUDD",
-    TILBAKEKREVING = "TILBAKEKREVING",
+    SAeRBIDRAG = "SÆRBIDRAG",
 }
 
 /** Grunnlagstype */
 export enum Grunnlagstype {
     SAeRFRADRAG = "SÆRFRADRAG",
     SKATTEKLASSE = "SKATTEKLASSE",
-    NETTOSAeRTILSKUDD = "NETTO_SÆRTILSKUDD",
     SAMVAeRSKLASSE = "SAMVÆRSKLASSE",
     BIDRAGSEVNE = "BIDRAGSEVNE",
     SAMVAeRSFRADRAG = "SAMVÆRSFRADRAG",
@@ -57,7 +57,6 @@ export enum Grunnlagstype {
     BPS_ANDEL_UNDERHOLDSKOSTNAD = "BPS_ANDEL_UNDERHOLDSKOSTNAD",
     TILLEGGSBIDRAG = "TILLEGGSBIDRAG",
     MAKS_BIDRAG_PER_BARN = "MAKS_BIDRAG_PER_BARN",
-    BPSANDELSAeRTILSKUDD = "BPS_ANDEL_SÆRTILSKUDD",
     MAKSGRENSE25INNTEKT = "MAKS_GRENSE_25_INNTEKT",
     GEBYRFRITAK = "GEBYRFRITAK",
     INNBETALTBELOP = "INNBETALT_BELØP",
@@ -69,9 +68,17 @@ export enum Grunnlagstype {
     SOKNAD = "SØKNAD",
     VIRKNINGSTIDSPUNKT = "VIRKNINGSTIDSPUNKT",
     NOTAT = "NOTAT",
+    SAeRBIDRAGKATEGORI = "SÆRBIDRAG_KATEGORI",
+    UTGIFT_DIREKTE_BETALT = "UTGIFT_DIREKTE_BETALT",
+    UTGIFTSPOST = "UTGIFTSPOST",
     SLUTTBEREGNING_FORSKUDD = "SLUTTBEREGNING_FORSKUDD",
     DELBEREGNING_SUM_INNTEKT = "DELBEREGNING_SUM_INNTEKT",
     DELBEREGNING_BARN_I_HUSSTAND = "DELBEREGNING_BARN_I_HUSSTAND",
+    SLUTTBEREGNINGSAeRBIDRAG = "SLUTTBEREGNING_SÆRBIDRAG",
+    DELBEREGNING_BIDRAGSEVNE = "DELBEREGNING_BIDRAGSEVNE",
+    DELBEREGNING_VOKSNE_I_HUSSTAND = "DELBEREGNING_VOKSNE_I_HUSSTAND",
+    DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG = "DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL_SÆRBIDRAG",
+    DELBEREGNING_UTGIFT = "DELBEREGNING_UTGIFT",
     PERSON = "PERSON",
     PERSON_BIDRAGSMOTTAKER = "PERSON_BIDRAGSMOTTAKER",
     PERSON_BIDRAGSPLIKTIG = "PERSON_BIDRAGSPLIKTIG",
@@ -90,6 +97,7 @@ export enum Grunnlagstype {
     INNHENTET_INNTEKT_BARNETILSYN = "INNHENTET_INNTEKT_BARNETILSYN",
     INNHENTETINNTEKTSMABARNSTILLEGG = "INNHENTET_INNTEKT_SMÅBARNSTILLEGG",
     INNHENTET_INNTEKT_UTVIDETBARNETRYGD = "INNHENTET_INNTEKT_UTVIDETBARNETRYGD",
+    UNNTAK = "UNNTAK",
 }
 
 /** Angir om engangsbeløpet skal innkreves */
@@ -111,7 +119,7 @@ export interface OpprettBehandlingsreferanseRequestDto {
 
 /** Liste over alle engangsbeløp som inngår i vedtaket */
 export interface OpprettEngangsbelopRequestDto {
-    /** Beløpstype. Saertilskudd, gebyr m.m. */
+    /** Beløpstype. Særbidrag, gebyr m.m. */
     type: Engangsbeloptype;
     /** Referanse til sak */
     sak: string;
@@ -147,6 +155,11 @@ export interface OpprettEngangsbelopRequestDto {
     eksternReferanse?: string;
     /** Liste over alle grunnlag som inngår i engangsbeløpet */
     grunnlagReferanseListe: string[];
+    /**
+     * Beløp BP allerede har betalt. Kan være 0 eller høyere.
+     * @min 0
+     */
+    betaltBeløp?: number;
 }
 
 /** Liste over alle grunnlag som inngår i vedtaket */
@@ -285,101 +298,6 @@ export interface TypeArManedsperiode {
     til?: string;
 }
 
-/** BaseGrunnlag */
-export interface BaseGrunnlag {
-    /** Grunnlagstype */
-    type: Grunnlagstype;
-    /** Liste over grunnlagsreferanser */
-    grunnlagsreferanseListe: string[];
-    /** Referanse (unikt navn på grunnlaget) */
-    referanse: string;
-    /** Grunnlagsinnhold (generisk) */
-    innhold: JsonNode;
-    /** Referanse til personobjektet grunnlaget gjelder */
-    gjelderReferanse?: string;
-}
-
-export interface MermaidResponse {
-    mermaidGraph: string;
-    vedtak: TreeVedtak;
-    stønadsendringer: TreeStonad[];
-    perioder: TreePeriode[];
-    grunnlagListe: BaseGrunnlag[];
-}
-
-export interface TreePeriode {
-    nodeId: string;
-    beløp?: number;
-    valutakode?: string;
-    resultatkode: string;
-    delytelseId?: string;
-}
-
-export interface TreeStonad {
-    nodeId: string;
-    /** Stønadstype */
-    type: Stonadstype;
-    sak: string;
-    skyldner: string;
-    kravhaver: string;
-    mottaker: string;
-    /** @format int32 */
-    førsteIndeksreguleringsår?: number;
-    /** Angir om engangsbeløpet skal innkreves */
-    innkreving: Innkrevingstype;
-    /** Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endringGyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING' */
-    beslutning: Beslutningstype;
-    /** @format int32 */
-    omgjørVedtakId?: number;
-    eksternReferanse?: string;
-}
-
-export interface TreeVedtak {
-    nodeId: string;
-    kilde: TreeVedtakKildeEnum;
-    /** Type vedtak */
-    type: Vedtakstype;
-    opprettetAv: string;
-    opprettetAvNavn?: string;
-    kildeapplikasjon: string;
-    /** @format date-time */
-    vedtakstidspunkt: string;
-    enhetsnummer?: string;
-    /** @format date */
-    innkrevingUtsattTilDato?: string;
-    fastsattILand?: string;
-    /** @format date-time */
-    opprettetTidspunkt: string;
-}
-
-/** Grunnlag */
-export interface GrunnlagDto {
-    /** Referanse (unikt navn på grunnlaget) */
-    referanse: string;
-    /** Grunnlagstype */
-    type: Grunnlagstype;
-    /** Grunnlagsinnhold (generisk) */
-    innhold: JsonNode;
-    /** Liste over grunnlagsreferanser */
-    grunnlagsreferanseListe: string[];
-    /** Referanse til personobjektet grunnlaget gjelder */
-    gjelderReferanse?: string;
-}
-
-export type POJONode = object;
-
-export interface TreeChild {
-    name: string;
-    id: string;
-    type: TreeChildTypeEnum;
-    children: TreeChild[];
-    innhold?: POJONode;
-    /** Grunnlag */
-    grunnlag?: GrunnlagDto;
-    /** Grunnlagstype */
-    grunnlagstype?: Grunnlagstype;
-}
-
 export interface OpprettVedtakResponseDto {
     /**
      * Unik id generert for vedtak
@@ -400,7 +318,7 @@ export interface BehandlingsreferanseDto {
 
 /** Liste over alle engangsbeløp som inngår i vedtaket */
 export interface EngangsbelopDto {
-    /** Beløpstype. Saertilskudd, gebyr m.m. */
+    /** Beløpstype. Særbidrag, gebyr m.m. */
     type: Engangsbeloptype;
     /** Referanse til sak */
     sak: string;
@@ -436,6 +354,25 @@ export interface EngangsbelopDto {
     eksternReferanse?: string;
     /** Liste over alle grunnlag som inngår i beregningen */
     grunnlagReferanseListe: string[];
+    /**
+     * Beløp BP allerede har betalt. Kan være 0 eller høyere.
+     * @min 0
+     */
+    betaltBeløp?: number;
+}
+
+/** Grunnlag */
+export interface GrunnlagDto {
+    /** Referanse (unikt navn på grunnlaget) */
+    referanse: string;
+    /** Grunnlagstype */
+    type: Grunnlagstype;
+    /** Grunnlagsinnhold (generisk) */
+    innhold: JsonNode;
+    /** Liste over grunnlagsreferanser */
+    grunnlagsreferanseListe: string[];
+    /** Referanse til personobjektet grunnlaget gjelder */
+    gjelderReferanse?: string;
 }
 
 /** Liste over alle stønadsendringer som inngår i vedtaket */
@@ -535,19 +472,6 @@ export interface VedtakPeriodeDto {
 export enum OpprettVedtakRequestDtoKildeEnum {
     MANUELT = "MANUELT",
     AUTOMATISK = "AUTOMATISK",
-}
-
-export enum TreeVedtakKildeEnum {
-    MANUELT = "MANUELT",
-    AUTOMATISK = "AUTOMATISK",
-}
-
-export enum TreeChildTypeEnum {
-    FRITTSTAENDE = "FRITTSTÅENDE",
-    VEDTAK = "VEDTAK",
-    STONADSENDRING = "STØNADSENDRING",
-    PERIODE = "PERIODE",
-    GRUNNLAG = "GRUNNLAG",
 }
 
 /** Hva er kilden til vedtaket. Automatisk eller manuelt */
@@ -716,38 +640,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         /**
          * No description
          *
-         * @tags vedtak-graph-controller
-         * @name VedtakTilMermaid
-         * @request POST:/vedtak/mermaid/{vedtakId}
-         * @secure
-         */
-        vedtakTilMermaid: (vedtakId: number, params: RequestParams = {}) =>
-            this.request<MermaidResponse, any>({
-                path: `/vedtak/mermaid/${vedtakId}`,
-                method: "POST",
-                secure: true,
-                ...params,
-            }),
-
-        /**
-         * No description
-         *
-         * @tags vedtak-graph-controller
-         * @name VedtakTilTre
-         * @request POST:/vedtak/graph/{vedtakId}
-         * @secure
-         */
-        vedtakTilTre: (vedtakId: number, params: RequestParams = {}) =>
-            this.request<TreeChild, any>({
-                path: `/vedtak/graph/${vedtakId}`,
-                method: "POST",
-                secure: true,
-                ...params,
-            }),
-
-        /**
-         * No description
-         *
          * @tags vedtak-controller
          * @name OpprettVedtak
          * @summary Oppretter nytt vedtak
@@ -795,22 +687,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         hentVedtak: (vedtaksid: number, params: RequestParams = {}) =>
             this.request<VedtakDto, void>({
                 path: `/vedtak/${vedtaksid}`,
-                method: "GET",
-                secure: true,
-                ...params,
-            }),
-
-        /**
-         * No description
-         *
-         * @tags vedtak-graph-controller
-         * @name VedtakTilMermaidText
-         * @request GET:/vedtak/mermaid/{vedtakId}/text
-         * @secure
-         */
-        vedtakTilMermaidText: (vedtakId: number, params: RequestParams = {}) =>
-            this.request<string, any>({
-                path: `/vedtak/mermaid/${vedtakId}/text`,
                 method: "GET",
                 secure: true,
                 ...params,

@@ -1,6 +1,6 @@
-import { GrunnlagDto, Grunnlagstype } from "../../api/BidragBehandlingApiV1";
+import { EngangsbelopDto, GrunnlagDto, Grunnlagstype } from "../../api/BidragBehandlingApiV1";
 import { StonadsendringDto, VedtakDto, VedtakPeriodeDto } from "../../api/BidragVedtakApi";
-import { TreeChild, TreeChildType, TreePeriode, TreeStønad, TreeVedtak } from "./types";
+import { TreeChild, TreeChildType, TreeEngangsbeløp, TreePeriode, TreeStønad, TreeVedtak } from "./types";
 import { hentVisningsnavn } from "./VisningsnavnMapper";
 
 export function mapVedtakToTree(vedtak: VedtakDto) {
@@ -15,7 +15,7 @@ export function mapVedtakToTree(vedtak: VedtakDto) {
 
     const grunnlagSomIkkeErReferert: TreeChild = {
         id: "ikke_referert",
-        name: "Frittstående(Ikke refert av grunnlag eller stønadsendring)",
+        name: "Frittstående(Ikke refert av grunnlag eller stønadsendring/engangsbeløp)",
         parent: vedtakParent,
         type: TreeChildType.FRITTSTÅENDE,
         children: genererGrunnlagSomIkkeErReferert(vedtak, vedtakParent),
@@ -24,6 +24,20 @@ export function mapVedtakToTree(vedtak: VedtakDto) {
 
     vedtakParent.children.push(grunnlagSomIkkeErReferert);
 
+    vedtak.engangsbeløpListe.forEach((engangsbeløp, i) => {
+        const stønadsendringNode: TreeChild = {
+            id: nodeIdEngangsbeløp(engangsbeløp),
+            name: `Engangsbeløp Barn ${i + 1}`,
+            type: TreeChildType.ENGANGSBELØP,
+            parent: vedtakParent,
+            children: [],
+            innhold: engangsbeløpToTreeDto(engangsbeløp),
+        };
+        vedtakParent.children.push(stønadsendringNode);
+        engangsbeløp.grunnlagReferanseListe.forEach((referanse) => {
+            stønadsendringNode.children.push(referanseTilTree(referanse, vedtak.grunnlagListe, stønadsendringNode));
+        });
+    });
     vedtak.stønadsendringListe.forEach((stønadsendring, i) => {
         const stønadsendringNode: TreeChild = {
             id: nodeIdStønadsendring(stønadsendring),
@@ -61,6 +75,7 @@ function genererGrunnlagSomIkkeErReferert(vedtak: VedtakDto, parent: TreeChild):
         .filter((grunnlag) => filtrerBasertPåFremmendReferanse(grunnlag.referanse, vedtak.grunnlagListe).length == 0)
         .filter((g) => !stønadsendringerInneholderReferanse(vedtak.stønadsendringListe, g.referanse))
         .filter((g) => !stønadsendringPerioderInneholderReferanse(vedtak.stønadsendringListe, g.referanse))
+        .filter((g) => !engangsbeløpInneholderReferanse(vedtak.engangsbeløpListe, g.referanse))
         .map((g) => referanseTilTree(g.referanse, vedtak.grunnlagListe, parent));
 }
 
@@ -104,15 +119,17 @@ function tilRolleVisningsnavn(type?: Grunnlagstype) {
     }
 }
 function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: GrunnlagDto[]) {
+    const gjelder = hentFørsteBasertPåReferanse(grunnlag.gjelderReferanse, grunnlagsListe);
+    const gjelderVisningsnavn = tilRolleVisningsnavn(gjelder?.type);
     switch (grunnlag.type) {
         case Grunnlagstype.SLUTTBEREGNING_FORSKUDD: {
             return `Sluttberegning(${toCompactString(grunnlag.innhold.periode.fom)})`;
         }
         case Grunnlagstype.SJABLON: {
-            return `Sjablon(${grunnlag.innhold.sjablon})`;
+            return `Sjablon(${grunnlag.innhold.sjablon ?? grunnlag.referanse})`;
         }
         case Grunnlagstype.DELBEREGNING_SUM_INNTEKT: {
-            return `Delberegning sum inntekt(${toCompactString(grunnlag.innhold.periode.fom)})`;
+            return `Delberegning sum inntekt ${gjelderVisningsnavn} (${toCompactString(grunnlag.innhold.periode.fom)})`;
         }
         case Grunnlagstype.DELBEREGNING_BARN_I_HUSSTAND: {
             return `Delberegning barn i husstand(${toCompactString(grunnlag.innhold.periode.fom)})`;
@@ -130,7 +147,9 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
         }
         case Grunnlagstype.BOSTATUS_PERIODE: {
             const visningsnavn = hentVisningsnavn(grunnlag.innhold.bostatus);
-            return `Bosstatus(${visningsnavn}/${toCompactString(grunnlag.innhold.periode.fom)}})`;
+            return `Bosstatus ${gjelderVisningsnavn} (${visningsnavn}/${toCompactString(
+                grunnlag.innhold.periode.fom
+            )}})`;
         }
         case Grunnlagstype.NOTAT:
             return `Notat(${grunnlag.innhold.type})`;
@@ -140,6 +159,12 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
             return `Innhentet skattegrunnlag(${grunnlag.innhold.år})`;
         case Grunnlagstype.INNHENTET_SIVILSTAND:
             return "Innhentet sivilstand (Alle)";
+        case Grunnlagstype.DELBEREGNING_VOKSNE_I_HUSSTAND:
+            return "Delberegning voksne i husstand";
+        case Grunnlagstype.DELBEREGNING_BIDRAGSEVNE:
+            return "Delberegning bidragsevne";
+        case Grunnlagstype.DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG:
+            return "Delberegning bidragspliktiges andel særbidrag";
         default:
             if (grunnlag.type.startsWith("PERSON_")) {
                 return `${grunnlag.type}(${toCompactString(grunnlag.innhold.fødselsdato)})`;
@@ -172,6 +197,14 @@ function innhentetTilVisningsnavn(grunnlagstype: Grunnlagstype): string {
     return "";
 }
 
+function engangsbeløpInneholderReferanse(engangsbeløpListe: EngangsbelopDto[], referanse: string): boolean {
+    return engangsbeløpListe.some((s) => inneholderReferanse(referanse, s.grunnlagReferanseListe));
+}
+
+function inneholderReferanse(referanse: string, grunnlagReferanseListe?: string[]): boolean {
+    if (!grunnlagReferanseListe || grunnlagReferanseListe.length == 0) return false;
+    return grunnlagReferanseListe.some((gref) => gref === referanse);
+}
 function stønadsendringPerioderInneholderReferanse(
     stønadsendringListe: StonadsendringDto[],
     referanse: string
@@ -215,6 +248,23 @@ export function stønadsendringPeriodeToTreeDto(
         delytelseId: periode.delytelseId,
     };
 }
+
+export function engangsbeløpToTreeDto(engangsbeløp: EngangsbelopDto): TreeEngangsbeløp {
+    return {
+        nodeId: nodeIdEngangsbeløp(engangsbeløp),
+        type: engangsbeløp.type,
+        sak: engangsbeløp.sak,
+        beløp: engangsbeløp.beløp,
+        beløpBetalt: engangsbeløp.betaltBeløp,
+        skyldner: engangsbeløp.skyldner,
+        kravhaver: engangsbeløp.kravhaver,
+        mottaker: engangsbeløp.mottaker,
+        innkreving: engangsbeløp.innkreving,
+        beslutning: engangsbeløp.beslutning,
+        omgjørVedtakId: engangsbeløp.omgjørVedtakId,
+        eksternReferanse: engangsbeløp.eksternReferanse,
+    };
+}
 export function stønadsendringToTreeDto(stonad: StonadsendringDto): TreeStønad {
     return {
         nodeId: nodeIdStønadsendring(stonad),
@@ -253,6 +303,10 @@ function vedtakNodeId(): string {
 
 function nodeIdStønadsendring(stønadsendring: StonadsendringDto): string {
     return `Stønadsendring_${stønadsendring.type}_${stønadsendring.kravhaver}`;
+}
+
+function nodeIdEngangsbeløp(engangsbeløp: EngangsbelopDto): string {
+    return `Engangsbeløp_${engangsbeløp.type}_${engangsbeløp.kravhaver}`;
 }
 
 function nodeIdVedtakPeriode(vedtakPeriode: VedtakPeriodeDto, stønadsendring: StonadsendringDto): string {
