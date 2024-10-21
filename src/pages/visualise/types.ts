@@ -60,6 +60,7 @@ export interface TreeEngangsbeløp {
     nodeId: string;
     type: string;
     sak: string;
+    resultatkode: string;
     skyldner: string;
     beløp: number;
     beløpBetalt: number;
