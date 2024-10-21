@@ -44,8 +44,6 @@ export enum Grunnlagstype {
     SKATTEKLASSE = "SKATTEKLASSE",
     SAMVAeRSKLASSE = "SAMVÆRSKLASSE",
     BIDRAGSEVNE = "BIDRAGSEVNE",
-    SAMVAeRSFRADRAG = "SAMVÆRSFRADRAG",
-    SJABLON = "SJABLON",
     LOPENDEBIDRAG = "LØPENDE_BIDRAG",
     FAKTISK_UTGIFT = "FAKTISK_UTGIFT",
     BARNETILSYNMEDSTONAD = "BARNETILSYN_MED_STØNAD",
@@ -62,6 +60,15 @@ export enum Grunnlagstype {
     INNBETALTBELOP = "INNBETALT_BELØP",
     FORHOLDSMESSIG_FORDELING = "FORHOLDSMESSIG_FORDELING",
     KLAGE_STATISTIKK = "KLAGE_STATISTIKK",
+    SAMVAeRSPERIODE = "SAMVÆRSPERIODE",
+    SJABLON = "SJABLON",
+    SJABLON_BIDRAGSEVNE = "SJABLON_BIDRAGSEVNE",
+    SJABLON_TRINNVIS_SKATTESATS = "SJABLON_TRINNVIS_SKATTESATS",
+    SJABLON_BARNETILSYN = "SJABLON_BARNETILSYN",
+    SJABLON_FORBRUKSUTGIFTER = "SJABLON_FORBRUKSUTGIFTER",
+    SJABLON_SAMVARSFRADRAG = "SJABLON_SAMVARSFRADRAG",
+    SJABLON_MAKS_FRADRAG = "SJABLON_MAKS_FRADRAG",
+    SJABLON_MAKS_TILSYN = "SJABLON_MAKS_TILSYN",
     BOSTATUS_PERIODE = "BOSTATUS_PERIODE",
     SIVILSTAND_PERIODE = "SIVILSTAND_PERIODE",
     INNTEKT_RAPPORTERING_PERIODE = "INNTEKT_RAPPORTERING_PERIODE",
@@ -70,23 +77,29 @@ export enum Grunnlagstype {
     NOTAT = "NOTAT",
     SAeRBIDRAGKATEGORI = "SÆRBIDRAG_KATEGORI",
     UTGIFT_DIREKTE_BETALT = "UTGIFT_DIREKTE_BETALT",
-    UTGIFTSPOST = "UTGIFTSPOST",
+    UTGIFTMAKSGODKJENTBELOP = "UTGIFT_MAKS_GODKJENT_BELØP",
+    UTGIFTSPOSTER = "UTGIFTSPOSTER",
     SLUTTBEREGNING_FORSKUDD = "SLUTTBEREGNING_FORSKUDD",
     DELBEREGNING_SUM_INNTEKT = "DELBEREGNING_SUM_INNTEKT",
     DELBEREGNING_BARN_I_HUSSTAND = "DELBEREGNING_BARN_I_HUSSTAND",
     SLUTTBEREGNINGSAeRBIDRAG = "SLUTTBEREGNING_SÆRBIDRAG",
     DELBEREGNING_BIDRAGSEVNE = "DELBEREGNING_BIDRAGSEVNE",
+    DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG = "DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG",
     DELBEREGNING_VOKSNE_I_HUSSTAND = "DELBEREGNING_VOKSNE_I_HUSSTAND",
     DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG = "DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL_SÆRBIDRAG",
+    DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL = "DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL",
     DELBEREGNING_UTGIFT = "DELBEREGNING_UTGIFT",
+    DELBEREGNINGSAMVAeRSFRADRAG = "DELBEREGNING_SAMVÆRSFRADRAG",
     PERSON = "PERSON",
     PERSON_BIDRAGSMOTTAKER = "PERSON_BIDRAGSMOTTAKER",
     PERSON_BIDRAGSPLIKTIG = "PERSON_BIDRAGSPLIKTIG",
     PERSON_REELL_MOTTAKER = "PERSON_REELL_MOTTAKER",
     PERSONSOKNADSBARN = "PERSON_SØKNADSBARN",
     PERSON_HUSSTANDSMEDLEM = "PERSON_HUSSTANDSMEDLEM",
+    PERSON_BARN_BIDRAGSPLIKTIG = "PERSON_BARN_BIDRAGSPLIKTIG",
     BEREGNET_INNTEKT = "BEREGNET_INNTEKT",
     INNHENTET_HUSSTANDSMEDLEM = "INNHENTET_HUSSTANDSMEDLEM",
+    INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN = "INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN",
     INNHENTET_SIVILSTAND = "INNHENTET_SIVILSTAND",
     INNHENTET_ARBEIDSFORHOLD = "INNHENTET_ARBEIDSFORHOLD",
     INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE = "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
@@ -231,7 +244,7 @@ export interface OpprettStonadsendringRequestDto {
 
 export interface OpprettVedtakRequestDto {
     /** Hva er kilden til vedtaket. Automatisk eller manuelt */
-    kilde: OpprettVedtakRequestDtoKildeEnum;
+    kilde: "MANUELT" | "AUTOMATISK";
     /** Type vedtak */
     type: Vedtakstype;
     /** Skal bare brukes ved batchkjøring. Id til batchjobb som oppretter vedtaket */
@@ -298,6 +311,107 @@ export interface TypeArManedsperiode {
     til?: string;
 }
 
+/** Request for å hente alle endringsvedtak for en stønad (saksnr, stønadstype, skyldner, kravhaver */
+export interface HentVedtakForStonadRequest {
+    /** Saksnummer */
+    sak: string;
+    /** Stønadstype */
+    type: Stonadstype;
+    /** Personen som er skyldner i stønaden */
+    skyldner: string;
+    /** Personen som er kravhaver i stønaden */
+    kravhaver: string;
+}
+
+/** Referanser til alle behandlinger som ligger som grunnlag til vedtaket */
+export interface BehandlingsreferanseDto {
+    /** Kilde/type for en behandlingsreferanse */
+    kilde: BehandlingsrefKilde;
+    /** Kildesystemets referanse til behandlingen */
+    referanse: string;
+}
+
+/** Respons med alle endringsvedtak for en stønad (saksnr, stønadstype, skyldner, kravhaver */
+export interface HentVedtakForStonadResponse {
+    /** Liste med vedtak for stønad */
+    vedtakListe: VedtakForStonad[];
+}
+
+/** Stønadsendringen for vedtaket */
+export interface StonadsendringDto {
+    /** Stønadstype */
+    type: Stonadstype;
+    /** Referanse til sak */
+    sak: string;
+    /** Personidenten til den som skal betale bidraget */
+    skyldner: string;
+    /** Personidenten til den som krever bidraget */
+    kravhaver: string;
+    /** Personidenten til den som mottar bidraget */
+    mottaker: string;
+    /**
+     * Angir første år en stønad skal indeksreguleres
+     * @format int32
+     */
+    førsteIndeksreguleringsår?: number;
+    /** Angir om engangsbeløpet skal innkreves */
+    innkreving: Innkrevingstype;
+    /** Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endringGyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING' */
+    beslutning: Beslutningstype;
+    /**
+     * Id for vedtaket det er klaget på
+     * @format int32
+     */
+    omgjørVedtakId?: number;
+    /** Referanse som brukes i utlandssaker */
+    eksternReferanse?: string;
+    /** Liste over grunnlag som er knyttet direkte til stønadsendringen */
+    grunnlagReferanseListe: string[];
+    /** Liste over alle perioder som inngår i stønadsendringen */
+    periodeListe: VedtakPeriodeDto[];
+}
+
+/** Objekt med relevant informasjon fra vedtak */
+export interface VedtakForStonad {
+    /**
+     * Unik id generert for vedtak
+     * @format int64
+     */
+    vedtaksid: number;
+    /**
+     * Tidspunkt vedtaket ble fattet
+     * @format date-time
+     */
+    vedtakstidspunkt: string;
+    /** Type vedtak */
+    type: Vedtakstype;
+    /** Hva er kilden til vedtaket. Automatisk eller manuelt */
+    kilde: "MANUELT" | "AUTOMATISK";
+    /** Stønadsendringen for vedtaket */
+    stønadsendring: StonadsendringDto;
+    /** Referanser til alle behandlinger som ligger som grunnlag til vedtaket */
+    behandlingsreferanser: BehandlingsreferanseDto[];
+}
+
+/** Liste over alle perioder som inngår i stønadsendringen */
+export interface VedtakPeriodeDto {
+    /** Periode med fra-og-med-dato og til-dato med format ÅÅÅÅ-MM */
+    periode: TypeArManedsperiode;
+    /**
+     * Beregnet stønadsbeløp
+     * @min 0
+     */
+    beløp?: number;
+    /** Valutakoden tilhørende stønadsbeløpet */
+    valutakode?: string;
+    /** Resultatkoden tilhørende stønadsbeløpet */
+    resultatkode: string;
+    /** Referanse - delytelseId/beslutningslinjeId -> bidrag-regnskap. Skal fjernes senere */
+    delytelseId?: string;
+    /** Liste over alle grunnlag som inngår i perioden */
+    grunnlagReferanseListe: string[];
+}
+
 export interface OpprettVedtakResponseDto {
     /**
      * Unik id generert for vedtak
@@ -306,14 +420,6 @@ export interface OpprettVedtakResponseDto {
     vedtaksid: number;
     /** Liste over alle referansen for engangsbeløp som inngår i vedtaket. Ligger i samme rekkefølge som i requesten */
     engangsbeløpReferanseListe: string[];
-}
-
-/** Liste med referanser til alle behandlinger som ligger som grunnlag til vedtaket */
-export interface BehandlingsreferanseDto {
-    /** Kilde/type for en behandlingsreferanse */
-    kilde: BehandlingsrefKilde;
-    /** Kildesystemets referanse til behandlingen */
-    referanse: string;
 }
 
 /** Liste over alle engangsbeløp som inngår i vedtaket */
@@ -375,43 +481,9 @@ export interface GrunnlagDto {
     gjelderReferanse?: string;
 }
 
-/** Liste over alle stønadsendringer som inngår i vedtaket */
-export interface StonadsendringDto {
-    /** Stønadstype */
-    type: Stonadstype;
-    /** Referanse til sak */
-    sak: string;
-    /** Personidenten til den som skal betale bidraget */
-    skyldner: string;
-    /** Personidenten til den som krever bidraget */
-    kravhaver: string;
-    /** Personidenten til den som mottar bidraget */
-    mottaker: string;
-    /**
-     * Angir første år en stønad skal indeksreguleres
-     * @format int32
-     */
-    førsteIndeksreguleringsår?: number;
-    /** Angir om engangsbeløpet skal innkreves */
-    innkreving: Innkrevingstype;
-    /** Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endringGyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING' */
-    beslutning: Beslutningstype;
-    /**
-     * Id for vedtaket det er klaget på
-     * @format int32
-     */
-    omgjørVedtakId?: number;
-    /** Referanse som brukes i utlandssaker */
-    eksternReferanse?: string;
-    /** Liste over grunnlag som er knyttet direkte til stønadsendringen */
-    grunnlagReferanseListe: string[];
-    /** Liste over alle perioder som inngår i stønadsendringen */
-    periodeListe: VedtakPeriodeDto[];
-}
-
 export interface VedtakDto {
     /** Hva er kilden til vedtaket. Automatisk eller manuelt */
-    kilde: VedtakDtoKildeEnum;
+    kilde: "MANUELT" | "AUTOMATISK";
     /** Type vedtak */
     type: Vedtakstype;
     /** Id til saksbehandler eller batchjobb som opprettet vedtaket. For saksbehandler er ident hentet fra token */
@@ -447,37 +519,6 @@ export interface VedtakDto {
     engangsbeløpListe: EngangsbelopDto[];
     /** Liste med referanser til alle behandlinger som ligger som grunnlag til vedtaket */
     behandlingsreferanseListe: BehandlingsreferanseDto[];
-}
-
-/** Liste over alle perioder som inngår i stønadsendringen */
-export interface VedtakPeriodeDto {
-    /** Periode med fra-og-med-dato og til-dato med format ÅÅÅÅ-MM */
-    periode: TypeArManedsperiode;
-    /**
-     * Beregnet stønadsbeløp
-     * @min 0
-     */
-    beløp?: number;
-    /** Valutakoden tilhørende stønadsbeløpet */
-    valutakode?: string;
-    /** Resultatkoden tilhørende stønadsbeløpet */
-    resultatkode: string;
-    /** Referanse - delytelseId/beslutningslinjeId -> bidrag-regnskap. Skal fjernes senere */
-    delytelseId?: string;
-    /** Liste over alle grunnlag som inngår i perioden */
-    grunnlagReferanseListe: string[];
-}
-
-/** Hva er kilden til vedtaket. Automatisk eller manuelt */
-export enum OpprettVedtakRequestDtoKildeEnum {
-    MANUELT = "MANUELT",
-    AUTOMATISK = "AUTOMATISK",
-}
-
-/** Hva er kilden til vedtaket. Automatisk eller manuelt */
-export enum VedtakDtoKildeEnum {
-    MANUELT = "MANUELT",
-    AUTOMATISK = "AUTOMATISK",
 }
 
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from "axios";
@@ -525,7 +566,10 @@ export class HttpClient<SecurityDataType = unknown> {
     private format?: ResponseType;
 
     constructor({ securityWorker, secure, format, ...axiosConfig }: ApiConfig<SecurityDataType> = {}) {
-        this.instance = axios.create({ ...axiosConfig, baseURL: axiosConfig.baseURL || "http://localhost:8889" });
+        this.instance = axios.create({
+            ...axiosConfig,
+            baseURL: axiosConfig.baseURL || "https://bidrag-vedtak-feature.intern.dev.nav.no",
+        });
         this.secure = secure;
         this.format = format;
         this.securityWorker = securityWorker;
@@ -614,7 +658,7 @@ export class HttpClient<SecurityDataType = unknown> {
 /**
  * @title bidrag-vedtak
  * @version v1
- * @baseUrl http://localhost:8889
+ * @baseUrl https://bidrag-vedtak-feature.intern.dev.nav.no
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
     vedtak = {
@@ -630,6 +674,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         oppdaterVedtak: (vedtaksid: number, data: OpprettVedtakRequestDto, params: RequestParams = {}) =>
             this.request<number, void>({
                 path: `/vedtak/oppdater/${vedtaksid}`,
+                method: "POST",
+                body: data,
+                secure: true,
+                type: ContentType.Json,
+                ...params,
+            }),
+
+        /**
+         * No description
+         *
+         * @tags vedtak-controller
+         * @name HentVedtakForSak
+         * @summary Henter endringsvedtak for angitt sak, skyldner, kravhaver og type
+         * @request POST:/vedtak/hent-vedtak
+         * @secure
+         */
+        hentVedtakForSak: (data: HentVedtakForStonadRequest, params: RequestParams = {}) =>
+            this.request<HentVedtakForStonadResponse, void>({
+                path: `/vedtak/hent-vedtak`,
                 method: "POST",
                 body: data,
                 secure: true,

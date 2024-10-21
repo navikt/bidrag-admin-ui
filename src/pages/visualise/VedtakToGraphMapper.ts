@@ -165,6 +165,8 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
             return "Delberegning bidragsevne";
         case Grunnlagstype.DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG:
             return "Delberegning bidragspliktiges andel særbidrag";
+        case Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL:
+            return "Delberegning sum løpende bidrag";
         default:
             if (grunnlag.type.startsWith("PERSON_")) {
                 return `${grunnlag.type}(${toCompactString(grunnlag.innhold.fødselsdato)})`;
@@ -255,6 +257,7 @@ export function engangsbeløpToTreeDto(engangsbeløp: EngangsbelopDto): TreeEnga
         type: engangsbeløp.type,
         sak: engangsbeløp.sak,
         beløp: engangsbeløp.beløp,
+        resultatKode: engangsbeløp.resultatkode,
         beløpBetalt: engangsbeløp.betaltBeløp,
         skyldner: engangsbeløp.skyldner,
         kravhaver: engangsbeløp.kravhaver,
