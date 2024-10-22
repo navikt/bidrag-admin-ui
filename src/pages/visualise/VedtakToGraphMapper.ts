@@ -166,7 +166,9 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
         case Grunnlagstype.DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG:
             return "Delberegning bidragspliktiges andel særbidrag";
         case Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL:
-            return "Delberegning sum løpende bidrag";
+            return "Delberegning bidragspliktiges andel";
+        case Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG:
+            return "Delberegning bidragspliktiges beregnede totalbidrag";
         default:
             if (grunnlag.type.startsWith("PERSON_")) {
                 return `${grunnlag.type}(${toCompactString(grunnlag.innhold.fødselsdato)})`;
