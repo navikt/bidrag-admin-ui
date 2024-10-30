@@ -445,12 +445,12 @@
   resolved "https://npm.pkg.github.com/download/@navikt/aksel-icons/5.18.3/0e8ff38b54ec91be6c5e8d8574a3341ee87eb792#0e8ff38b54ec91be6c5e8d8574a3341ee87eb792"
   integrity sha512-kytq0BT1xsJBrG7/eyDuMQLddQZA4OMT3Fw3VLGHsJNqjEWEVOl3uYCGL70Thvg0+du0s/Z3mXPQUQpIaDt7rg==
 
-"@navikt/bidrag-ui-common@^1.10.9":
-  version "1.10.9"
-  resolved "https://npm.pkg.github.com/download/@navikt/bidrag-ui-common/1.10.9/39635495533cdc36e382bf772097a5357d5c3f80#39635495533cdc36e382bf772097a5357d5c3f80"
-  integrity sha512-zXT+aJZuO9BA2UQ26JOm8SVhaYbofGMojxyQ9Ud52ry9MNqWD5vee/2lomseY1uXp0Vi9kOXQyMqbPrUApTK6A==
+"@navikt/bidrag-ui-common@^1.10.12":
+  version "1.10.12"
+  resolved "https://npm.pkg.github.com/download/@navikt/bidrag-ui-common/1.10.12/f807695c9f192f78cc5371c6472ecf2de131da7c#f807695c9f192f78cc5371c6472ecf2de131da7c"
+  integrity sha512-NLxnYj+MElU3q5s7vbS2XgCz/ShZ/85PXeTjB/jIMdzSGQ3shkOct01vmnDU+pcd7nO0HMPgjFnDlnjC1GcLSw==
   dependencies:
-    axios "^1.6.3"
+    axios "^1.7.7"
     echarts "^5.4.3"
     lodash.debounce "^4.0.8"
     uuid "^9.0.1"
@@ -1611,12 +1611,12 @@ available-typed-arrays@^1.0.5:
   resolved "https://registry.npmjs.org/available-typed-arrays/-/available-typed-arrays-1.0.5.tgz"
   integrity sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==
 
-axios@^1.6.3:
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.3.tgz#7f50f23b3aa246eff43c54834272346c396613f4"
-  integrity sha512-fWyNdeawGam70jXSVlKl+SUNVcL6j6W79CuSIPfi6HnDUmSCH6gyUys/HrqHeA/wU0Az41rRgean494d0Jb+ww==
+axios@^1.7.7:
+  version "1.7.7"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.7.7.tgz#2f554296f9892a72ac8d8e4c5b79c14a91d0a47f"
+  integrity sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==
   dependencies:
-    follow-redirects "^1.15.0"
+    follow-redirects "^1.15.6"
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
 
@@ -3618,10 +3618,10 @@ follow-redirects@^1.0.0:
   resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.1.tgz"
   integrity sha512-yLAMQs+k0b2m7cVxpS1VKJVvoz7SS9Td1zss3XRwXj+ZDH00RJgnuLx7E44wx02kQLrdM3aOOy+FpzS7+8OizA==
 
-follow-redirects@^1.15.0:
-  version "1.15.3"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.3.tgz#fe2f3ef2690afce7e82ed0b44db08165b207123a"
-  integrity sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==
+follow-redirects@^1.15.6:
+  version "1.15.9"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.9.tgz#a604fa10e443bf98ca94228d9eebcc2e8a2c8ee1"
+  integrity sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==
 
 for-each@^0.3.3:
   version "0.3.3"
