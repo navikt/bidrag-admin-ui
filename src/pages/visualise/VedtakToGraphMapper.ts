@@ -24,7 +24,7 @@ export function mapVedtakToTree(vedtak: VedtakDto) {
 
     vedtakParent.children.push(grunnlagSomIkkeErReferert);
 
-    vedtak.engangsbeløpListe.forEach((engangsbeløp, i) => {
+    vedtak.engangsbeløpListe.forEach((engangsbeløp) => {
         const engangsbeløpNode: TreeChild = {
             id: nodeIdEngangsbeløp(engangsbeløp),
             name: `Engangsbeløp ${hentVisningsnavn(engangsbeløp.type)}`,
