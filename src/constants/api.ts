@@ -7,11 +7,13 @@ import environment from "../environment";
 export const BIDRAG_VEDTAK_API = useApi(
     new BidragVedtakApi({ baseURL: environment.url.bidragVedtak }),
     "bidrag-vedtak",
-    "gcp"
+    "gcp",
+    environment.system.environment
 );
 
 export const BEHANDLING_API_V1 = useApi(
     new BidragBehandlingApiV1({ baseURL: environment.url.bidragBehandling }),
     "bidrag-behandling",
-    "gcp"
+    "gcp",
+    environment.system.environment
 );
