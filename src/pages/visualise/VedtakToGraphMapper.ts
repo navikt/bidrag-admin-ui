@@ -25,17 +25,17 @@ export function mapVedtakToTree(vedtak: VedtakDto) {
     vedtakParent.children.push(grunnlagSomIkkeErReferert);
 
     vedtak.engangsbeløpListe.forEach((engangsbeløp, i) => {
-        const stønadsendringNode: TreeChild = {
+        const engangsbeløpNode: TreeChild = {
             id: nodeIdEngangsbeløp(engangsbeløp),
-            name: `Engangsbeløp Barn ${i + 1}`,
+            name: `Engangsbeløp ${hentVisningsnavn(engangsbeløp.type)}`,
             type: TreeChildType.ENGANGSBELØP,
             parent: vedtakParent,
             children: [],
             innhold: engangsbeløpToTreeDto(engangsbeløp),
         };
-        vedtakParent.children.push(stønadsendringNode);
+        vedtakParent.children.push(engangsbeløpNode);
         engangsbeløp.grunnlagReferanseListe.forEach((referanse) => {
-            stønadsendringNode.children.push(referanseTilTree(referanse, vedtak.grunnlagListe, stønadsendringNode));
+            engangsbeløpNode.children.push(referanseTilTree(referanse, vedtak.grunnlagListe, engangsbeløpNode));
         });
     });
     vedtak.stønadsendringListe.forEach((stønadsendring, i) => {
@@ -139,6 +139,7 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
             const år = new Date(innhold.periode.fom).getFullYear();
             const visningsnavn = hentVisningsnavn(innhold.inntektsrapportering, år);
             const manueltRegistrert = innhold.manueltRegistrert ? " (manuelt registrert)" : "";
+
             return visningsnavn + manueltRegistrert;
         }
         case Grunnlagstype.SIVILSTAND_PERIODE: {
@@ -166,7 +167,8 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
         case Grunnlagstype.DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG:
             return "Delberegning bidragspliktiges andel særbidrag";
         case Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL:
-            return "Delberegning sum løpende bidrag";
+            return "Delberegning bidragspliktiges andel særbidrag";
+
         default:
             if (grunnlag.type.startsWith("PERSON_")) {
                 return `${grunnlag.type}(${toCompactString(grunnlag.innhold.fødselsdato)})`;
