@@ -90,6 +90,7 @@ function referanseTilTree(referanse?: string, grunnlagsliste?: GrunnlagDto[], pa
     const children = [
         ...grunnlag.grunnlagsreferanseListe.map((ref) => referanseTilTree(ref, grunnlagsliste)),
         referanseTilTree(grunnlag.gjelderReferanse, grunnlagsliste),
+        referanseTilTree(grunnlag.gjelderBarnReferanse, grunnlagsliste),
     ].filter((item) => item !== null);
 
     return {
@@ -125,7 +126,7 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
         case Grunnlagstype.SLUTTBEREGNING_FORSKUDD: {
             return `Sluttberegning(${toCompactString(grunnlag.innhold.periode.fom)})`;
         }
-        case Grunnlagstype.SJABLON: {
+        case Grunnlagstype.SJABLON_SJABLONTALL: {
             return `Sjablon(${grunnlag.innhold.sjablon ?? grunnlag.referanse})`;
         }
         case Grunnlagstype.DELBEREGNING_SUM_INNTEKT: {
@@ -164,10 +165,16 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
             return "Delberegning voksne i husstand";
         case Grunnlagstype.DELBEREGNING_BIDRAGSEVNE:
             return "Delberegning bidragsevne";
+        case Grunnlagstype.DELBEREGNINGSAMVAeRSFRADRAG:
+            return "Delberegning samværsfradrag";
+        case Grunnlagstype.BARNETILSYNMEDSTONADPERIODE:
+            return "Barnetilsyn med stønad";
+        case Grunnlagstype.DELBEREGNING_UNDERHOLDSKOSTNAD:
+            return "Delberegning underholdskostnad";
         case Grunnlagstype.DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG:
             return "Delberegning bidragspliktiges andel særbidrag";
         case Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL:
-            return "Delberegning bidragspliktiges andel særbidrag";
+            return "Delberegning bidragspliktiges andel";
 
         default:
             if (grunnlag.type.startsWith("PERSON_")) {

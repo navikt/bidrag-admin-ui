@@ -149,20 +149,13 @@ export enum OpplysningerType {
 }
 
 export enum Resultatkode {
+    GEBYR_FRITTATT = "GEBYR_FRITTATT",
+    GEBYR_ILAGT = "GEBYR_ILAGT",
     BARNETERSELVFORSORGET = "BARNET_ER_SELVFORSØRGET",
-    BEGRENSETEVNEFLERESAKERUTFORFORHOLDSMESSIGFORDELING = "BEGRENSET_EVNE_FLERE_SAKER_UTFØR_FORHOLDSMESSIG_FORDELING",
-    BEGRENSET_REVURDERING = "BEGRENSET_REVURDERING",
-    BIDRAG_IKKE_BEREGNET_DELT_BOSTED = "BIDRAG_IKKE_BEREGNET_DELT_BOSTED",
-    BIDRAG_REDUSERT_AV_EVNE = "BIDRAG_REDUSERT_AV_EVNE",
-    BIDRAGREDUSERTTIL25PROSENTAVINNTEKT = "BIDRAG_REDUSERT_TIL_25_PROSENT_AV_INNTEKT",
-    BIDRAG_SATT_TIL_BARNETILLEGG_BP = "BIDRAG_SATT_TIL_BARNETILLEGG_BP",
-    BIDRAG_SATT_TIL_BARNETILLEGG_FORSVARET = "BIDRAG_SATT_TIL_BARNETILLEGG_FORSVARET",
-    BIDRAG_SATT_TIL_UNDERHOLDSKOSTNAD_MINUS_BARNETILLEGG_BM = "BIDRAG_SATT_TIL_UNDERHOLDSKOSTNAD_MINUS_BARNETILLEGG_BM",
-    DELT_BOSTED = "DELT_BOSTED",
-    FORHOLDSMESSIGFORDELINGBIDRAGSBELOPENDRET = "FORHOLDSMESSIG_FORDELING_BIDRAGSBELØP_ENDRET",
-    FORHOLDSMESSIG_FORDELING_INGEN_ENDRING = "FORHOLDSMESSIG_FORDELING_INGEN_ENDRING",
-    INGEN_EVNE = "INGEN_EVNE",
-    KOSTNADSBEREGNET_BIDRAG = "KOSTNADSBEREGNET_BIDRAG",
+    DIREKTEOPPJOR = "DIREKTE_OPPJØR",
+    IKKE_OMSORG_FOR_BARNET = "IKKE_OMSORG_FOR_BARNET",
+    BIDRAGSPLIKTIGERDOD = "BIDRAGSPLIKTIG_ER_DØD",
+    BEREGNET_BIDRAG = "BEREGNET_BIDRAG",
     REDUSERTFORSKUDD50PROSENT = "REDUSERT_FORSKUDD_50_PROSENT",
     ORDINAeRTFORSKUDD75PROSENT = "ORDINÆRT_FORSKUDD_75_PROSENT",
     FORHOYETFORSKUDD100PROSENT = "FORHØYET_FORSKUDD_100_PROSENT",
@@ -209,15 +202,13 @@ export enum Rolletype {
 
 export interface SamvaerskalkulatorDetaljer {
     ferier: SamvaerskalkulatorFerie[];
-    /** @format int32 */
+    /** @max 15 */
     regelmessigSamværNetter: number;
 }
 
 export interface SamvaerskalkulatorFerie {
     type: SamvaerskalkulatorFerietype;
-    /** @format int32 */
     bidragsmottakerNetter: number;
-    /** @format int32 */
     bidragspliktigNetter: number;
     frekvens: SamvaerskalkulatorNetterFrekvens;
 }
@@ -233,11 +224,11 @@ export enum SamvaerskalkulatorFerietype {
 
 export enum SamvaerskalkulatorNetterFrekvens {
     HVERTAR = "HVERT_ÅR",
-    ANNENHVERTAR = "ANNEN_HVERT_ÅR",
+    ANNETHVERTAR = "ANNET_HVERT_ÅR",
 }
 
 export enum Samvaersklasse {
-    INGENSAMVAeR = "INGEN_SAMVÆR",
+    SAMVAeRSKLASSE0 = "SAMVÆRSKLASSE_0",
     SAMVAeRSKLASSE1 = "SAMVÆRSKLASSE_1",
     SAMVAeRSKLASSE2 = "SAMVÆRSKLASSE_2",
     SAMVAeRSKLASSE3 = "SAMVÆRSKLASSE_3",
@@ -324,6 +315,8 @@ export enum TypeArsakstype {
     TREMANEDERTILBAKE = "TRE_MÅNEDER_TILBAKE",
     TREARSREGELEN = "TRE_ÅRS_REGELEN",
     FRAMANEDENETTERIPAVENTEAVBIDRAGSSAK = "FRA_MÅNEDEN_ETTER_I_PÅVENTE_AV_BIDRAGSSAK",
+    FRAMANEDENETTERPRIVATAVTALE = "FRA_MÅNEDEN_ETTER_PRIVAT_AVTALE",
+    BIDRAGSPLIKTIGHARIKKEBIDRATTTILFORSORGELSE = "BIDRAGSPLIKTIG_HAR_IKKE_BIDRATT_TIL_FORSØRGELSE",
 }
 
 /** Deprekert - Bruk oppdatereBegrunnelse i stedet */
@@ -491,12 +484,15 @@ export interface BehandlingDtoV2 {
     /** @format int64 */
     id: number;
     type: TypeBehandling;
+    medInnkreving: boolean;
     innkrevingstype: Innkrevingstype;
     vedtakstype: Vedtakstype;
     opprinneligVedtakstype?: Vedtakstype;
     stønadstype?: Stonadstype;
     engangsbeløptype?: Engangsbeloptype;
     erVedtakFattet: boolean;
+    kanBehandlesINyLøsning: boolean;
+    kanIkkeBehandlesBegrunnelse?: string;
     erKlageEllerOmgjøring: boolean;
     /** @format date-time */
     opprettetTidspunkt: string;
@@ -550,6 +546,7 @@ export interface BoforholdDtoV2 {
     valideringsfeil: BoforholdValideringsfeil;
     /** Er sann hvis status på andre voksne i husstanden er 'BOR_IKKE_MED_ANDRE_VOKSNE', men det er 18 åring i husstanden som regnes som voksen i husstanden */
     egetBarnErEnesteVoksenIHusstanden?: boolean;
+    beregnetBoforhold: DelberegningBoforhold[];
     /**
      * Erstattes av husstandsmedlem
      * @deprecated
@@ -613,6 +610,20 @@ export interface BostatusperiodeGrunnlagDto {
 
 export type Datoperiode = UtilRequiredKeys<PeriodeLocalDate, "fom">;
 
+export interface DatoperiodeDto {
+    /** @format date */
+    fom: string;
+    /** @format date */
+    tom?: string;
+}
+
+export interface DelberegningBoforhold {
+    periode: TypeArManedsperiode;
+    /** @format double */
+    antallBarn: number;
+    borMedAndreVoksne: boolean;
+}
+
 /** Liste over summerte inntektsperioder */
 export interface DelberegningSumInntekt {
     periode: TypeArManedsperiode;
@@ -626,10 +637,10 @@ export interface DelberegningSumInntekt {
 
 export interface FaktiskTilsynsutgiftDto {
     /** @format int64 */
-    id: number;
-    periode: Datoperiode | TypeArManedsperiode;
+    id?: number;
+    periode: DatoperiodeDto;
     utgift: number;
-    kostpenger: number;
+    kostpenger?: number;
     kommentar?: string;
     total: number;
 }
@@ -891,6 +902,15 @@ export interface OverlappendePeriode {
     inntektstyper: Inntektstype[];
 }
 
+export interface OverlappendeSamvaerPeriode {
+    periode: Datoperiode;
+    /**
+     * Teknisk id på inntekter som overlapper
+     * @uniqueItems true
+     */
+    idListe: number[];
+}
+
 export interface PeriodeAndreVoksneIHusstanden {
     periode: TypeArManedsperiode;
     status: Bostatuskode;
@@ -905,9 +925,9 @@ export interface PeriodeAndreVoksneIHusstanden {
 
 export interface PeriodeLocalDate {
     /** @format date */
-    til?: string;
-    /** @format date */
     fom: string;
+    /** @format date */
+    til?: string;
 }
 
 /** Liste over registrerte permisjoner */
@@ -958,15 +978,32 @@ export interface SamvaerDto {
     /** @format int64 */
     id: number;
     gjelderBarn: string;
-    perioder: SamvaersperiodeDto[];
     begrunnelse?: BegrunnelseDto;
+    valideringsfeil?: SamvaerValideringsfeilDto;
+    perioder: SamvaersperiodeDto[];
+}
+
+export interface SamvaerValideringsfeilDto {
+    /** @format int64 */
+    samværId: number;
+    manglerBegrunnelse: boolean;
+    ingenLøpendeSamvær: boolean;
+    manglerSamvær: boolean;
+    /** @uniqueItems true */
+    overlappendePerioder: OverlappendeSamvaerPeriode[];
+    /** Liste med perioder hvor det mangler inntekter. Vil alltid være tom liste for ytelser */
+    hullIPerioder: Datoperiode[];
+    gjelderBarnNavn?: string;
+    gjelderBarn?: string;
+    harPeriodiseringsfeil: boolean;
 }
 
 export interface SamvaersperiodeDto {
     /** @format int64 */
     id?: number;
-    periode: Datoperiode;
+    periode: DatoperiodeDto;
     samværsklasse: Samvaersklasse;
+    gjennomsnittligSamværPerMåned: number;
     beregning?: SamvaerskalkulatorDetaljer;
 }
 
@@ -1066,11 +1103,11 @@ export enum SivilstandskodePDL {
 
 export interface StonadTilBarnetilsynDto {
     /** @format int64 */
-    id: number;
-    periode: Datoperiode | TypeArManedsperiode;
+    id?: number;
+    periode: DatoperiodeDto;
     skolealder: StonadTilBarnetilsynDtoSkolealderEnum;
     tilsynstype: StonadTilBarnetilsynDtoTilsynstypeEnum;
-    klde: Kilde;
+    kilde: Kilde;
 }
 
 export interface SaerbidragKategoriDto {
@@ -1100,8 +1137,8 @@ export enum Saerbidragskategori {
 
 export interface TilleggsstonadDto {
     /** @format int64 */
-    id: number;
-    periode: Datoperiode | TypeArManedsperiode;
+    id?: number;
+    periode: DatoperiodeDto;
     dagsats: number;
     total: number;
 }
@@ -1124,18 +1161,20 @@ export interface UnderholdDto {
     /** @format int64 */
     id: number;
     gjelderBarn: PersoninfoDto;
-    harTilsynsordning: boolean;
+    harTilsynsordning?: boolean;
     /** @uniqueItems true */
     stønadTilBarnetilsyn: StonadTilBarnetilsynDto[];
     /** @uniqueItems true */
-    faktiskeTilsynsutgifter: FaktiskTilsynsutgiftDto[];
+    faktiskTilsynsutgift: FaktiskTilsynsutgiftDto[];
     /** @uniqueItems true */
     tilleggsstønad: TilleggsstonadDto[];
-    underholdskostnand: UnderholdskostnadDto;
+    /** @uniqueItems true */
+    underholdskostnad: UnderholdskostnadDto[];
+    begrunnelse?: string;
 }
 
 export interface UnderholdskostnadDto {
-    periode: TypeArManedsperiode;
+    periode: DatoperiodeDto;
     forbruk: number;
     boutgifter: number;
     stønadTilBarnetilsyn: number;
@@ -1269,42 +1308,70 @@ export interface OppdatereUtgiftResponse {
     oppdatertNotat?: string;
 }
 
-/** Barnet underholdskostnaden gjelder. */
-export interface BarnDto {
+export interface OppdatereTilleggsstonadRequest {
     /** @format int64 */
     id?: number;
-    personident?: string;
-    navn?: string;
+    periode: DatoperiodeDto;
+    dagsats: number;
 }
 
-export interface OppdatereUnderholdskostnad {
-    /** Barnet underholdskostnaden gjelder. */
-    gjelderBarn: BarnDto;
-    harTilsynsordning?: boolean;
-    stønadTilBarnetilsynDto?: StonadTilBarnetilsynDto;
+export interface OppdatereUnderholdResponse {
+    stønadTilBarnetilsyn?: StonadTilBarnetilsynDto;
     faktiskTilsynsutgift?: FaktiskTilsynsutgiftDto;
     tilleggsstønad?: TilleggsstonadDto;
-    slette?: SletteUnderholdselement;
+    /** @uniqueItems true */
+    underholdskostnad: UnderholdskostnadDto[];
+    valideringsfeil?: ValideringsfeilUnderhold;
 }
 
-export interface SletteUnderholdselement {
+export interface UnderholdBarnDto {
+    navn?: string;
+    ident?: string;
+    /** @format date */
+    fødselsdato: string;
+    medIBehandling: boolean;
+}
+
+export interface ValideringsfeilUnderhold {
+    hullIPerioder: Datoperiode[];
+    overlappendePerioder: OverlappendeBostatusperiode[];
+    /** Er sann hvis det finnes en eller flere perioder som starter senere enn starten av dagens måned. */
+    fremtidigPeriode: boolean;
+    /** Er sann hvis antall perioder er 0." */
+    harIngenPerioder: boolean;
+    /** Er sann hvis det er satt at BM har tilsynsordning for barnet men det mangler perioder for tilsynsutgifter. */
+    manglerPerioderForTilsynsutgifter: boolean;
     /** @format int64 */
-    id: number;
-    type: SletteUnderholdselementTypeEnum;
+    underholdskostnadId?: number;
+    barn: UnderholdBarnDto;
 }
 
-export interface DatoperiodeDto {
-    /** @format date */
-    fom: string;
-    /** @format date */
-    tom?: string;
+export interface OppdatereUnderholdRequest {
+    harTilsynsordning?: boolean;
+    begrunnelse?: string;
+}
+
+export interface OppdatereFaktiskTilsynsutgiftRequest {
+    /** @format int64 */
+    id?: number;
+    periode: DatoperiodeDto;
+    utgift: number;
+    kostpenger?: number;
+    kommentar?: string;
+}
+
+export interface OppdatereBegrunnelseRequest {
+    /**
+     * Id til underhold begrunnelsen gjelder for hvis søknadsbarn. Null for andre barn.
+     * @format int64
+     */
+    underholdsid?: number;
+    begrunnelse: string;
 }
 
 export interface OppdaterSamvaerDto {
     gjelderBarn: string;
     periode?: OppdaterSamvaersperiodeDto;
-    /** @format int64 */
-    slettPeriode?: number;
     /** Deprekert - Bruk oppdatereBegrunnelse i stedet */
     oppdatereBegrunnelse?: OppdatereBegrunnelse;
 }
@@ -1315,31 +1382,11 @@ export interface OppdaterSamvaersperiodeDto {
     periode: DatoperiodeDto;
     samværsklasse?: Samvaersklasse;
     beregning?: SamvaerskalkulatorDetaljer;
-    slettBeregning?: boolean;
 }
 
 export interface OppdaterSamvaerResponsDto {
     /** Samværsperioder. Vil alltid være null for forskudd og særbidrag */
     oppdatertSamvær?: SamvaerDto;
-    /** Saksbehandlers begrunnelse */
-    begrunnelse?: string;
-    valideringsfeil?: SamvaerValideringsfeilDto;
-}
-
-export interface SamvaerValideringsfeilDto {
-    samværId: string;
-    gjelderBarn: string;
-    manglerBegrunnelse: boolean;
-    ingenLøpendeSamvær: boolean;
-    manglerSamvær: boolean;
-}
-
-export interface OppdaterSamvaerskalkulatorBeregningDto {
-    gjelderBarn: string;
-    /** @format int64 */
-    samværsperiodeId: number;
-    beregning: SamvaerskalkulatorDetaljer;
-    samværsklasse?: Samvaersklasse;
 }
 
 export interface OppdatereInntektRequest {
@@ -1560,6 +1607,7 @@ export interface OppdatereBoforholdResponse {
     oppdatertSivilstandshistorikk: SivilstandDto[];
     begrunnelse?: string;
     valideringsfeil: BoforholdValideringsfeil;
+    beregnetBoforhold: DelberegningBoforhold[];
     /** Erstattes av husstandsmedlem */
     oppdatertHusstandsbarn?: HusstandsmedlemDtoV2;
     /** Deprekert - Bruk oppdatereBegrunnelse i stedet */
@@ -1599,11 +1647,18 @@ export interface OpprettRolleDto {
      * @format date
      */
     fødselsdato?: string;
+    innbetaltBeløp?: number;
     erSlettet: boolean;
+    erUkjent: boolean;
 }
 
 export interface OppdaterRollerResponse {
     status: OppdaterRollerResponseStatusEnum;
+}
+
+export interface DelberegningSamvaersklasse {
+    samværsklasse: Samvaersklasse;
+    gjennomsnittligSamværPerMåned: number;
 }
 
 export interface OpprettBehandlingRequest {
@@ -1650,6 +1705,15 @@ export interface OpprettBehandlingResponse {
     id: number;
 }
 
+export interface BarnDto {
+    /** @format int64 */
+    id?: number;
+    personident?: string;
+    navn?: string;
+    /** @format date */
+    fødselsdato?: string;
+}
+
 export interface OpprettBehandlingFraVedtakRequest {
     vedtakstype: Vedtakstype;
     /** @format date */
@@ -1671,6 +1735,34 @@ export interface OpprettBehandlingFraVedtakRequest {
     søknadsid: number;
     /** @format int64 */
     søknadsreferanseid?: number;
+}
+
+export interface KanBehandlesINyLosningRequest {
+    /**
+     * @minLength 7
+     * @maxLength 7
+     */
+    saksnummer: string;
+    /**
+     * @maxItems 2147483647
+     * @minItems 2
+     */
+    roller: SjekkRolleDto[];
+    stønadstype: Stonadstype;
+    vedtakstype: Vedtakstype;
+    engangsbeløpstype: Engangsbeloptype;
+    harReferanseTilAnnenBehandling: boolean;
+    søknadsbarn: SjekkRolleDto[];
+    /** Rolle beskrivelse som er brukte til å opprette nye roller */
+    bidragspliktig?: SjekkRolleDto;
+}
+
+/** Rolle beskrivelse som er brukte til å opprette nye roller */
+export interface SjekkRolleDto {
+    rolletype: Rolletype;
+    /** F.eks fødselsnummer. Påkrevd for alle rolletyper utenom for barn som ikke inngår i beregning. */
+    ident?: string | null;
+    erUkjent?: boolean;
 }
 
 export interface BeregnetBidragPerBarn {
@@ -1698,6 +1790,7 @@ export interface BidragsevneUtgifterBolig {
 }
 
 export interface DelberegningBidragsevneDto {
+    sumInntekt25Prosent: number;
     bidragsevne: number;
     skatt: Skatt;
     underholdEgneBarnIHusstand: UnderholdEgneBarnIHusstand;
@@ -1725,11 +1818,22 @@ export interface DelberegningUtgift {
     sumGodkjent: number;
 }
 
+export interface ResultatBeregningInntekterDto {
+    inntektBM?: number;
+    inntektBP?: number;
+    inntektBarn?: number;
+    barnEndeligInntekt?: number;
+    inntektBarnMånedlig?: number;
+    totalEndeligInntekt: number;
+    inntektBPMånedlig?: number;
+    inntektBMMånedlig?: number;
+}
+
 export interface ResultatSaerbidragsberegningDto {
     periode: TypeArManedsperiode;
     bpsAndel?: DelberegningBidragspliktigesAndel;
     beregning?: UtgiftBeregningDto;
-    inntekter?: ResultatSaerbidragsberegningInntekterDto;
+    inntekter?: ResultatBeregningInntekterDto;
     utgiftsposter: UtgiftspostDto[];
     delberegningUtgift?: DelberegningUtgift;
     delberegningBidragsevne?: DelberegningBidragsevneDto;
@@ -1747,26 +1851,16 @@ export interface ResultatSaerbidragsberegningDto {
     beløpSomInnkreves: number;
 }
 
-export interface ResultatSaerbidragsberegningInntekterDto {
-    inntektBM?: number;
-    inntektBP?: number;
-    inntektBarn?: number;
-    barnEndeligInntekt?: number;
-    totalEndeligInntekt: number;
-    inntektBPMånedlig?: number;
-    inntektBMMånedlig?: number;
-    inntektBarnMånedlig?: number;
-}
-
 export interface Skatt {
+    sumSkattFaktor: number;
     sumSkatt: number;
     skattAlminneligInntekt: number;
     trinnskatt: number;
     trygdeavgift: number;
     skattAlminneligInntektMånedsbeløp: number;
     skattMånedsbeløp: number;
-    trinnskattMånedsbeløp: number;
     trygdeavgiftMånedsbeløp: number;
+    trinnskattMånedsbeløp: number;
 }
 
 export interface UnderholdEgneBarnIHusstand {
@@ -1800,6 +1894,96 @@ export interface ResultatRolle {
     navn: string;
     /** @format date */
     fødselsdato: string;
+}
+
+export interface BarnetilleggDetaljerDto {
+    bruttoBeløp: number;
+    nettoBeløp: number;
+    visningsnavn: string;
+}
+
+export interface BeregningsdetaljerSamvaersfradrag {
+    samværsfradrag: number;
+    samværsklasse: Samvaersklasse;
+    gjennomsnittligSamværPerMåned: number;
+}
+
+export interface BidragPeriodeBeregningsdetaljer {
+    bpHarEvne: boolean;
+    /** @format double */
+    antallBarnIHusstanden?: number;
+    forskuddssats: number;
+    barnetilleggBM: DelberegningBarnetilleggDto;
+    barnetilleggBP: DelberegningBarnetilleggDto;
+    voksenIHusstanden?: boolean;
+    enesteVoksenIHusstandenErEgetBarn?: boolean;
+    bpsAndel?: DelberegningBidragspliktigesAndel;
+    inntekter?: ResultatBeregningInntekterDto;
+    delberegningBidragsevne?: DelberegningBidragsevneDto;
+    samværsfradrag?: BeregningsdetaljerSamvaersfradrag;
+    sluttberegning?: SluttberegningBarnebidrag;
+    delberegningUnderholdskostnad?: DelberegningUnderholdskostnad;
+    delberegningBidragspliktigesBeregnedeTotalBidrag?: DelberegningBidragspliktigesBeregnedeTotalbidragDto;
+    deltBosted: boolean;
+}
+
+export interface DelberegningBarnetilleggDto {
+    barnetillegg: BarnetilleggDetaljerDto[];
+    skattFaktor: number;
+    nettoBeløp: number;
+}
+
+export interface DelberegningUnderholdskostnad {
+    periode: TypeArManedsperiode;
+    forbruksutgift: number;
+    boutgift: number;
+    barnetilsynMedStønad?: number;
+    nettoTilsynsutgift?: number;
+    barnetrygd: number;
+    underholdskostnad: number;
+}
+
+export interface ResultatBarnebidragsberegningPeriodeDto {
+    periode: TypeArManedsperiode;
+    bpsAndelU: number;
+    samværsfradrag: number;
+    beregnetBidrag: number;
+    faktiskBidrag: number;
+    resultatKode?: Resultatkode;
+    erDirekteAvslag: boolean;
+    beregningsdetaljer?: BidragPeriodeBeregningsdetaljer;
+    resultatkodeVisningsnavn?: string;
+}
+
+export interface ResultatBidragberegningDto {
+    resultatBarn: ResultatBidragsberegningBarnDto[];
+}
+
+export interface ResultatBidragsberegningBarnDto {
+    barn: ResultatRolle;
+    perioder: ResultatBarnebidragsberegningPeriodeDto[];
+}
+
+export interface SluttberegningBarnebidrag {
+    periode: TypeArManedsperiode;
+    beregnetBeløp: number;
+    resultatBeløp: number;
+    uMinusNettoBarnetilleggBM?: number;
+    bruttoBidragEtterBarnetilleggBM: number;
+    nettoBidragEtterBarnetilleggBM: number;
+    bruttoBidragJustertForEvneOg25Prosent: number;
+    bruttoBidragEtterBarnetilleggBP: number;
+    nettoBidragEtterSamværsfradrag: number;
+    bpAndelAvUVedDeltBostedFaktor: number;
+    bpAndelAvUVedDeltBostedBeløp: number;
+    ingenEndringUnderGrense: boolean;
+    barnetErSelvforsørget: boolean;
+    bidragJustertForDeltBosted: boolean;
+    bidragJustertForNettoBarnetilleggBP: boolean;
+    bidragJustertForNettoBarnetilleggBM: boolean;
+    bidragJustertNedTilEvne: boolean;
+    bidragJustertNedTil25ProsentAvInntekt: boolean;
+    uminusNettoBarnetilleggBM: number;
 }
 
 export interface BehandlingInfoDto {
@@ -1845,6 +2029,10 @@ export interface BeregningValideringsfeil {
     husstandsmedlem?: BoforholdPeriodeseringsfeil[];
     andreVoksneIHusstanden?: AndreVoksneIHusstandenPeriodeseringsfeil;
     sivilstand?: SivilstandPeriodeseringsfeil;
+    /** @uniqueItems true */
+    samvær?: SamvaerValideringsfeilDto[];
+    /** @uniqueItems true */
+    underholdskostnad?: ValideringsfeilUnderhold[];
     /** @uniqueItems true */
     måBekrefteNyeOpplysninger: MaBekrefteNyeOpplysninger[];
 }
@@ -1958,20 +2146,22 @@ export interface GrunnlagDto {
     grunnlagsreferanseListe: string[];
     /** Referanse til personobjektet grunnlaget gjelder */
     gjelderReferanse?: string;
+    /** Referanse til barn personobjektet grunnlaget gjelder */
+    gjelderBarnReferanse?: string;
 }
 
 /** Grunnlagstype */
 export enum Grunnlagstype {
+    UKJENT = "UKJENT",
     SAeRFRADRAG = "SÆRFRADRAG",
     SKATTEKLASSE = "SKATTEKLASSE",
     SAMVAeRSKLASSE = "SAMVÆRSKLASSE",
     BIDRAGSEVNE = "BIDRAGSEVNE",
     LOPENDEBIDRAG = "LØPENDE_BIDRAG",
-    FAKTISK_UTGIFT = "FAKTISK_UTGIFT",
-    BARNETILSYNMEDSTONAD = "BARNETILSYN_MED_STØNAD",
+    FAKTISK_UTGIFT_PERIODE = "FAKTISK_UTGIFT_PERIODE",
+    TILLEGGSSTONADPERIODE = "TILLEGGSSTØNAD_PERIODE",
+    BARNETILSYNMEDSTONADPERIODE = "BARNETILSYN_MED_STØNAD_PERIODE",
     FORPLEINING_UTGIFT = "FORPLEINING_UTGIFT",
-    BARN = "BARN",
-    DELT_BOSTED = "DELT_BOSTED",
     NETTO_BARNETILSYN = "NETTO_BARNETILSYN",
     UNDERHOLDSKOSTNAD = "UNDERHOLDSKOSTNAD",
     BPS_ANDEL_UNDERHOLDSKOSTNAD = "BPS_ANDEL_UNDERHOLDSKOSTNAD",
@@ -1982,8 +2172,12 @@ export enum Grunnlagstype {
     INNBETALTBELOP = "INNBETALT_BELØP",
     FORHOLDSMESSIG_FORDELING = "FORHOLDSMESSIG_FORDELING",
     KLAGE_STATISTIKK = "KLAGE_STATISTIKK",
+    NETTO_TILSYNSUTGIFT = "NETTO_TILSYNSUTGIFT",
     SAMVAeRSPERIODE = "SAMVÆRSPERIODE",
-    SJABLON = "SJABLON",
+    SAMVAeRSKALKULATOR = "SAMVÆRSKALKULATOR",
+    DELBEREGNINGSAMVAeRSKLASSE = "DELBEREGNING_SAMVÆRSKLASSE",
+    DELBEREGNINGSAMVAeRSKLASSENETTER = "DELBEREGNING_SAMVÆRSKLASSE_NETTER",
+    SJABLON_SJABLONTALL = "SJABLON_SJABLONTALL",
     SJABLON_BIDRAGSEVNE = "SJABLON_BIDRAGSEVNE",
     SJABLON_TRINNVIS_SKATTESATS = "SJABLON_TRINNVIS_SKATTESATS",
     SJABLON_BARNETILSYN = "SJABLON_BARNETILSYN",
@@ -2008,10 +2202,19 @@ export enum Grunnlagstype {
     DELBEREGNING_BIDRAGSEVNE = "DELBEREGNING_BIDRAGSEVNE",
     DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG = "DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG",
     DELBEREGNING_VOKSNE_I_HUSSTAND = "DELBEREGNING_VOKSNE_I_HUSSTAND",
+    DELBEREGNING_FAKTISK_UTGIFT = "DELBEREGNING_FAKTISK_UTGIFT",
+    DELBEREGNINGTILLEGGSSTONAD = "DELBEREGNING_TILLEGGSSTØNAD",
+    DELBEREGNING_BOFORHOLD = "DELBEREGNING_BOFORHOLD",
     DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG = "DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL_SÆRBIDRAG",
     DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL = "DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL",
     DELBEREGNING_UTGIFT = "DELBEREGNING_UTGIFT",
     DELBEREGNINGSAMVAeRSFRADRAG = "DELBEREGNING_SAMVÆRSFRADRAG",
+    DELBEREGNING_NETTO_TILSYNSUTGIFT = "DELBEREGNING_NETTO_TILSYNSUTGIFT",
+    DELBEREGNING_BARNETILLEGG_SKATTESATS = "DELBEREGNING_BARNETILLEGG_SKATTESATS",
+    DELBEREGNING_NETTO_BARNETILLEGG = "DELBEREGNING_NETTO_BARNETILLEGG",
+    DELBEREGNING_UNDERHOLDSKOSTNAD = "DELBEREGNING_UNDERHOLDSKOSTNAD",
+    SLUTTBEREGNING_BARNEBIDRAG = "SLUTTBEREGNING_BARNEBIDRAG",
+    BARNETILLEGG_PERIODE = "BARNETILLEGG_PERIODE",
     PERSON = "PERSON",
     PERSON_BIDRAGSMOTTAKER = "PERSON_BIDRAGSMOTTAKER",
     PERSON_BIDRAGSPLIKTIG = "PERSON_BIDRAGSPLIKTIG",
@@ -2019,11 +2222,13 @@ export enum Grunnlagstype {
     PERSONSOKNADSBARN = "PERSON_SØKNADSBARN",
     PERSON_HUSSTANDSMEDLEM = "PERSON_HUSSTANDSMEDLEM",
     PERSON_BARN_BIDRAGSPLIKTIG = "PERSON_BARN_BIDRAGSPLIKTIG",
+    PERSON_BARN_BIDRAGSMOTTAKER = "PERSON_BARN_BIDRAGSMOTTAKER",
     BEREGNET_INNTEKT = "BEREGNET_INNTEKT",
     INNHENTET_HUSSTANDSMEDLEM = "INNHENTET_HUSSTANDSMEDLEM",
     INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN = "INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN",
     INNHENTET_SIVILSTAND = "INNHENTET_SIVILSTAND",
     INNHENTET_ARBEIDSFORHOLD = "INNHENTET_ARBEIDSFORHOLD",
+    INNHENTETTILLEGGSTONAD = "INNHENTET_TILLEGGSTØNAD",
     INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE = "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
     INNHENTET_INNTEKT_AORDNING = "INNHENTET_INNTEKT_AORDNING",
     INNHENTET_INNTEKT_BARNETILLEGG = "INNHENTET_INNTEKT_BARNETILLEGG",
@@ -2237,8 +2442,8 @@ export interface NotatBehandlingDetaljerDto {
     avslag?: Resultatkode;
     /** @format date */
     klageMottattDato?: string;
-    vedtakstypeVisningsnavn?: string;
     avslagVisningsnavnUtenPrefiks?: string;
+    vedtakstypeVisningsnavn?: string;
     avslagVisningsnavn?: string;
     kategoriVisningsnavn?: string;
 }
@@ -2389,8 +2594,8 @@ export interface NotatSkattBeregning {
     trygdeavgift: number;
     skattAlminneligInntektMånedsbeløp: number;
     skattMånedsbeløp: number;
-    trinnskattMånedsbeløp: number;
     trygdeavgiftMånedsbeløp: number;
+    trinnskattMånedsbeløp: number;
 }
 
 export interface NotatSaerbidragKategoriDto {
@@ -2481,8 +2686,8 @@ export interface NotatVirkningstidspunktDto {
     begrunnelse: NotatBegrunnelseDto;
     /** Notat begrunnelse skrevet av saksbehandler */
     notat: NotatBegrunnelseDto;
-    avslagVisningsnavn?: string;
     årsakVisningsnavn?: string;
+    avslagVisningsnavn?: string;
 }
 
 export interface NotatVoksenIHusstandenDetaljerDto {
@@ -2529,10 +2734,22 @@ export interface OpplysningerFraFolkeregisteretMedDetaljerSivilstandskodePDLUnit
     statusVisningsnavn?: string;
 }
 
+export interface ResultatSaerbidragsberegningInntekterDto {
+    inntektBM?: number;
+    inntektBP?: number;
+    inntektBarn?: number;
+    barnEndeligInntekt?: number;
+    inntektBarnMånedlig?: number;
+    totalEndeligInntekt: number;
+    inntektBPMånedlig?: number;
+    inntektBMMånedlig?: number;
+}
+
 export type Unit = object;
 
 export interface VedtakNotatDto {
     type: NotatMalType;
+    medInnkreving: boolean;
     saksnummer: string;
     behandling: NotatBehandlingDetaljerDto;
     saksbehandlerNavn?: string;
@@ -2546,6 +2763,14 @@ export interface VedtakNotatDto {
 
 export interface VedtakResultatInnhold {
     type: NotatMalType;
+}
+
+export interface SletteUnderholdselement {
+    /** @format int64 */
+    idUnderhold: number;
+    /** @format int64 */
+    idElement: number;
+    type: SletteUnderholdselementTypeEnum;
 }
 
 export interface SletteSamvaersperiodeElementDto {
@@ -2612,14 +2837,6 @@ export enum StonadTilBarnetilsynDtoTilsynstypeEnum {
     IKKE_ANGITT = "IKKE_ANGITT",
 }
 
-export enum SletteUnderholdselementTypeEnum {
-    BARN = "BARN",
-    FAKTISK_TILSYNSUGIFT = "FAKTISK_TILSYNSUGIFT",
-    STONADTILBARNETILSYN = "STØNAD_TIL_BARNETILSYN",
-    TILLEGGSSTONAD = "TILLEGGSSTØNAD",
-    UNDERHOLDSKOSTNAD = "UNDERHOLDSKOSTNAD",
-}
-
 export enum OppdaterRollerResponseStatusEnum {
     BEHANDLING_SLETTET = "BEHANDLING_SLETTET",
     ROLLER_OPPDATERT = "ROLLER_OPPDATERT",
@@ -2650,6 +2867,13 @@ export enum NotatBehandlingDetaljerDtoMonthEnum {
     OCTOBER = "OCTOBER",
     NOVEMBER = "NOVEMBER",
     DECEMBER = "DECEMBER",
+}
+
+export enum SletteUnderholdselementTypeEnum {
+    BARN = "BARN",
+    FAKTISK_TILSYNSUTGIFT = "FAKTISK_TILSYNSUTGIFT",
+    STONADTILBARNETILSYN = "STØNAD_TIL_BARNETILSYN",
+    TILLEGGSSTONAD = "TILLEGGSSTØNAD",
 }
 
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from "axios";
@@ -2833,16 +3057,45 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             }),
 
         /**
-         * @description Oppdatere underholdskostnad for behandling. Returnerer oppdaterte behandlingsdetaljer.
+         * @description Angir om søknadsbarn har tilsynsordning.
          *
          * @tags underhold-controller
-         * @name OppdatereUnderhold
-         * @request PUT:/api/v2/behandling/{behandlingsid}/underhold
+         * @name OppdatereTilsynsordning
+         * @request PUT:/api/v2/behandling/{behandlingsid}/underhold/{underholdsid}/tilsynsordning
          * @secure
          */
-        oppdatereUnderhold: (behandlingsid: number, data: OppdatereUnderholdskostnad, params: RequestParams = {}) =>
-            this.request<UnderholdDto, any>({
-                path: `/api/v2/behandling/${behandlingsid}/underhold`,
+        oppdatereTilsynsordning: (
+            behandlingsid: number,
+            underholdsid: number,
+            query: {
+                harTilsynsordning: boolean;
+            },
+            params: RequestParams = {}
+        ) =>
+            this.request<void, any>({
+                path: `/api/v2/behandling/${behandlingsid}/underhold/${underholdsid}/tilsynsordning`,
+                method: "PUT",
+                query: query,
+                secure: true,
+                ...params,
+            }),
+
+        /**
+         * @description Oppdatere tilleggsstønad for underholdskostnad i behandling. Returnerer oppdatert element.
+         *
+         * @tags underhold-controller
+         * @name OppdatereTilleggsstonad
+         * @request PUT:/api/v2/behandling/{behandlingsid}/underhold/{underholdsid}/tilleggsstonad
+         * @secure
+         */
+        oppdatereTilleggsstonad: (
+            behandlingsid: number,
+            underholdsid: number,
+            data: OppdatereTilleggsstonadRequest,
+            params: RequestParams = {}
+        ) =>
+            this.request<OppdatereUnderholdResponse, any>({
+                path: `/api/v2/behandling/${behandlingsid}/underhold/${underholdsid}/tilleggsstonad`,
                 method: "PUT",
                 body: data,
                 secure: true,
@@ -2852,21 +3105,93 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             }),
 
         /**
-         * @description Oppdatere underholdskostnad for behandling. Returnerer oppdaterte behandlingsdetaljer.
+         * @description Angir om et barn har tilsynsordning.
          *
          * @tags underhold-controller
-         * @name SletteFraUnderhold
-         * @request DELETE:/api/v2/behandling/{behandlingsid}/underhold
+         * @name OppdatereUnderhold
+         * @request PUT:/api/v2/behandling/{behandlingsid}/underhold/{underholdsid}/oppdatere
+         * @deprecated
          * @secure
          */
-        sletteFraUnderhold: (behandlingsid: number, data: SletteUnderholdselement, params: RequestParams = {}) =>
+        oppdatereUnderhold: (
+            behandlingsid: number,
+            underholdsid: number,
+            data: OppdatereUnderholdRequest,
+            params: RequestParams = {}
+        ) =>
             this.request<UnderholdDto, any>({
-                path: `/api/v2/behandling/${behandlingsid}/underhold`,
-                method: "DELETE",
+                path: `/api/v2/behandling/${behandlingsid}/underhold/${underholdsid}/oppdatere`,
+                method: "PUT",
                 body: data,
                 secure: true,
                 type: ContentType.Json,
                 format: "json",
+                ...params,
+            }),
+
+        /**
+         * @description Oppdatere faktisk tilsynsutgift for underholdskostnad i behandling. Returnerer oppdatert element.
+         *
+         * @tags underhold-controller
+         * @name OppdatereFaktiskTilsynsutgift
+         * @request PUT:/api/v2/behandling/{behandlingsid}/underhold/{underholdsid}/faktisk_tilsynsutgift
+         * @secure
+         */
+        oppdatereFaktiskTilsynsutgift: (
+            behandlingsid: number,
+            underholdsid: number,
+            data: OppdatereFaktiskTilsynsutgiftRequest,
+            params: RequestParams = {}
+        ) =>
+            this.request<OppdatereUnderholdResponse, any>({
+                path: `/api/v2/behandling/${behandlingsid}/underhold/${underholdsid}/faktisk_tilsynsutgift`,
+                method: "PUT",
+                body: data,
+                secure: true,
+                type: ContentType.Json,
+                format: "json",
+                ...params,
+            }),
+
+        /**
+         * @description Oppdatere stønad til barnetilsyn for underholdskostnad i behandling. Returnerer oppdatert element.
+         *
+         * @tags underhold-controller
+         * @name OppdatereStonadTilBarnetilsyn
+         * @request PUT:/api/v2/behandling/{behandlingsid}/underhold/{underholdsid}/barnetilsyn
+         * @secure
+         */
+        oppdatereStonadTilBarnetilsyn: (
+            behandlingsid: number,
+            underholdsid: number,
+            data: StonadTilBarnetilsynDto,
+            params: RequestParams = {}
+        ) =>
+            this.request<OppdatereUnderholdResponse, any>({
+                path: `/api/v2/behandling/${behandlingsid}/underhold/${underholdsid}/barnetilsyn`,
+                method: "PUT",
+                body: data,
+                secure: true,
+                type: ContentType.Json,
+                format: "json",
+                ...params,
+            }),
+
+        /**
+         * @description Oppdatere begrunnelse for underhold relatert til søknadsbarn eller andre barn.
+         *
+         * @tags underhold-controller
+         * @name OppdatereBegrunnelse
+         * @request PUT:/api/v2/behandling/{behandlingsid}/underhold/begrunnelse
+         * @secure
+         */
+        oppdatereBegrunnelse: (behandlingsid: number, data: OppdatereBegrunnelseRequest, params: RequestParams = {}) =>
+            this.request<void, any>({
+                path: `/api/v2/behandling/${behandlingsid}/underhold/begrunnelse`,
+                method: "PUT",
+                body: data,
+                secure: true,
+                type: ContentType.Json,
                 ...params,
             }),
 
@@ -2882,52 +3207,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             this.request<OppdaterSamvaerResponsDto, any>({
                 path: `/api/v2/behandling/${behandlingsid}/samvar`,
                 method: "PUT",
-                body: data,
-                secure: true,
-                type: ContentType.Json,
-                format: "json",
-                ...params,
-            }),
-
-        /**
-         * @description Oppdater samværsperiode beregning
-         *
-         * @tags samv-ær-controller
-         * @name OppdaterSamvaerskalkulatorBeregning
-         * @request PUT:/api/v2/behandling/{behandlingsid}/samvar/periode/beregning
-         * @secure
-         */
-        oppdaterSamvaerskalkulatorBeregning: (
-            behandlingsid: number,
-            data: OppdaterSamvaerskalkulatorBeregningDto,
-            params: RequestParams = {}
-        ) =>
-            this.request<OppdaterSamvaerResponsDto, any>({
-                path: `/api/v2/behandling/${behandlingsid}/samvar/periode/beregning`,
-                method: "PUT",
-                body: data,
-                secure: true,
-                type: ContentType.Json,
-                format: "json",
-                ...params,
-            }),
-
-        /**
-         * @description Slett samværsperiode
-         *
-         * @tags samv-ær-controller
-         * @name SlettSamvaerskalkulatorBeregning
-         * @request DELETE:/api/v2/behandling/{behandlingsid}/samvar/periode/beregning
-         * @secure
-         */
-        slettSamvaerskalkulatorBeregning: (
-            behandlingsid: number,
-            data: SletteSamvaersperiodeElementDto,
-            params: RequestParams = {}
-        ) =>
-            this.request<OppdaterSamvaerResponsDto, any>({
-                path: `/api/v2/behandling/${behandlingsid}/samvar/periode/beregning`,
-                method: "DELETE",
                 body: data,
                 secure: true,
                 type: ContentType.Json,
@@ -3020,7 +3299,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @secure
          */
         beregnSamvaersklasse: (data: SamvaerskalkulatorDetaljer, params: RequestParams = {}) =>
-            this.request<Samvaersklasse, any>({
+            this.request<DelberegningSamvaersklasse, any>({
                 path: `/api/v2/samvar/beregn`,
                 method: "POST",
                 body: data,
@@ -3054,6 +3333,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             }),
 
         /**
+         * @description Oppretter underholdselement med faktiske utgifter for BMs andre barn. Legges manuelt inn av saksbehandler.
+         *
+         * @tags underhold-controller
+         * @name OppretteUnderholdForBarn
+         * @request POST:/api/v2/behandling/{behandlingsid}/underhold/opprette
+         * @secure
+         */
+        oppretteUnderholdForBarn: (behandlingsid: number, data: BarnDto, params: RequestParams = {}) =>
+            this.request<UnderholdDto, any>({
+                path: `/api/v2/behandling/${behandlingsid}/underhold/opprette`,
+                method: "POST",
+                body: data,
+                secure: true,
+                type: ContentType.Json,
+                format: "json",
+                ...params,
+            }),
+
+        /**
          * @description Opprett behandling fra vedtak. Brukes når det skal opprettes klagebehanling fra vedtak.
          *
          * @tags behandling-controller-v-2
@@ -3077,6 +3375,40 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             }),
 
         /**
+         * @description Sjekk om behandling kan behandles i ny løsning
+         *
+         * @tags behandling-controller-v-2
+         * @name KanBehandlesINyLosning
+         * @request POST:/api/v2/behandling/kanBehandles
+         * @secure
+         */
+        kanBehandlesINyLosning: (data: KanBehandlesINyLosningRequest, params: RequestParams = {}) =>
+            this.request<void, any>({
+                path: `/api/v2/behandling/kanBehandles`,
+                method: "POST",
+                body: data,
+                secure: true,
+                type: ContentType.Json,
+                ...params,
+            }),
+
+        /**
+         * @description Sjekk om behandling kan behandles i ny løsning
+         *
+         * @tags behandling-controller-v-2
+         * @name KanBehandlingBehandlesINyLosning
+         * @request POST:/api/v2/behandling/kanBehandles/{behandlingsid}
+         * @secure
+         */
+        kanBehandlingBehandlesINyLosning: (behandlingsid: number, params: RequestParams = {}) =>
+            this.request<void, any>({
+                path: `/api/v2/behandling/kanBehandles/${behandlingsid}`,
+                method: "POST",
+                secure: true,
+                ...params,
+            }),
+
+        /**
          * @description Fatte vedtak for behandling
          *
          * @tags vedtak-controller
@@ -3094,7 +3426,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
             }),
 
         /**
-         * @description Beregn forskudd
+         * @description Beregn særbidrag
          *
          * @tags behandling-beregn-controller
          * @name HentVedtakBeregningResultatSaerbidrag
@@ -3138,6 +3470,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         hentVedtakBeregningResultat1: (vedtaksId: number, params: RequestParams = {}) =>
             this.request<ResultatBeregningBarnDto[], any>({
                 path: `/api/v1/vedtak/${vedtaksId}/beregn`,
+                method: "POST",
+                secure: true,
+                format: "json",
+                ...params,
+            }),
+
+        /**
+         * @description Beregn bidrag
+         *
+         * @tags behandling-beregn-controller
+         * @name HentVedtakBeregningResultatBidrag
+         * @request POST:/api/v1/vedtak/{vedtaksId}/beregn/bidrag
+         * @secure
+         */
+        hentVedtakBeregningResultatBidrag: (vedtaksId: number, params: RequestParams = {}) =>
+            this.request<ResultatBidragberegningDto, any>({
+                path: `/api/v1/vedtak/${vedtaksId}/beregn/bidrag`,
                 method: "POST",
                 secure: true,
                 format: "json",
@@ -3259,6 +3608,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         beregnForskudd1: (behandlingsid: number, params: RequestParams = {}) =>
             this.request<ResultatBeregningBarnDto[], BeregningValideringsfeil>({
                 path: `/api/v1/behandling/${behandlingsid}/beregn`,
+                method: "POST",
+                secure: true,
+                format: "json",
+                ...params,
+            }),
+
+        /**
+         * @description Beregn barnebidrag
+         *
+         * @tags behandling-beregn-controller
+         * @name BeregnBarnebidrag
+         * @request POST:/api/v1/behandling/{behandlingsid}/beregn/barnebidrag
+         * @secure
+         */
+        beregnBarnebidrag: (behandlingsid: number, params: RequestParams = {}) =>
+            this.request<ResultatBidragberegningDto, BeregningValideringsfeil>({
+                path: `/api/v1/behandling/${behandlingsid}/beregn/barnebidrag`,
                 method: "POST",
                 secure: true,
                 format: "json",
@@ -3448,6 +3814,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
                 path: `/api/v1/notat/vedtak/${vedtaksid}`,
                 method: "GET",
                 secure: true,
+                format: "json",
+                ...params,
+            }),
+
+        /**
+         * @description Sletter fra underholdskostnad i behandling. Returnerer oppdaterte underholdsobjekt. Objektet  vil være null dersom barn slettes.
+         *
+         * @tags underhold-controller
+         * @name SletteFraUnderhold
+         * @request DELETE:/api/v2/behandling/{behandlingsid}/underhold
+         * @secure
+         */
+        sletteFraUnderhold: (behandlingsid: number, data: SletteUnderholdselement, params: RequestParams = {}) =>
+            this.request<UnderholdDto, any>({
+                path: `/api/v2/behandling/${behandlingsid}/underhold`,
+                method: "DELETE",
+                body: data,
+                secure: true,
+                type: ContentType.Json,
                 format: "json",
                 ...params,
             }),

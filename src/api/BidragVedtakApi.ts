@@ -40,16 +40,16 @@ export enum Engangsbeloptype {
 
 /** Grunnlagstype */
 export enum Grunnlagstype {
+    UKJENT = "UKJENT",
     SAeRFRADRAG = "SÆRFRADRAG",
     SKATTEKLASSE = "SKATTEKLASSE",
     SAMVAeRSKLASSE = "SAMVÆRSKLASSE",
     BIDRAGSEVNE = "BIDRAGSEVNE",
     LOPENDEBIDRAG = "LØPENDE_BIDRAG",
-    FAKTISK_UTGIFT = "FAKTISK_UTGIFT",
-    BARNETILSYNMEDSTONAD = "BARNETILSYN_MED_STØNAD",
+    FAKTISK_UTGIFT_PERIODE = "FAKTISK_UTGIFT_PERIODE",
+    TILLEGGSSTONADPERIODE = "TILLEGGSSTØNAD_PERIODE",
+    BARNETILSYNMEDSTONADPERIODE = "BARNETILSYN_MED_STØNAD_PERIODE",
     FORPLEINING_UTGIFT = "FORPLEINING_UTGIFT",
-    BARN = "BARN",
-    DELT_BOSTED = "DELT_BOSTED",
     NETTO_BARNETILSYN = "NETTO_BARNETILSYN",
     UNDERHOLDSKOSTNAD = "UNDERHOLDSKOSTNAD",
     BPS_ANDEL_UNDERHOLDSKOSTNAD = "BPS_ANDEL_UNDERHOLDSKOSTNAD",
@@ -60,8 +60,12 @@ export enum Grunnlagstype {
     INNBETALTBELOP = "INNBETALT_BELØP",
     FORHOLDSMESSIG_FORDELING = "FORHOLDSMESSIG_FORDELING",
     KLAGE_STATISTIKK = "KLAGE_STATISTIKK",
+    NETTO_TILSYNSUTGIFT = "NETTO_TILSYNSUTGIFT",
     SAMVAeRSPERIODE = "SAMVÆRSPERIODE",
-    SJABLON = "SJABLON",
+    SAMVAeRSKALKULATOR = "SAMVÆRSKALKULATOR",
+    DELBEREGNINGSAMVAeRSKLASSE = "DELBEREGNING_SAMVÆRSKLASSE",
+    DELBEREGNINGSAMVAeRSKLASSENETTER = "DELBEREGNING_SAMVÆRSKLASSE_NETTER",
+    SJABLON_SJABLONTALL = "SJABLON_SJABLONTALL",
     SJABLON_BIDRAGSEVNE = "SJABLON_BIDRAGSEVNE",
     SJABLON_TRINNVIS_SKATTESATS = "SJABLON_TRINNVIS_SKATTESATS",
     SJABLON_BARNETILSYN = "SJABLON_BARNETILSYN",
@@ -86,10 +90,19 @@ export enum Grunnlagstype {
     DELBEREGNING_BIDRAGSEVNE = "DELBEREGNING_BIDRAGSEVNE",
     DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG = "DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG",
     DELBEREGNING_VOKSNE_I_HUSSTAND = "DELBEREGNING_VOKSNE_I_HUSSTAND",
+    DELBEREGNING_FAKTISK_UTGIFT = "DELBEREGNING_FAKTISK_UTGIFT",
+    DELBEREGNINGTILLEGGSSTONAD = "DELBEREGNING_TILLEGGSSTØNAD",
+    DELBEREGNING_BOFORHOLD = "DELBEREGNING_BOFORHOLD",
     DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG = "DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL_SÆRBIDRAG",
     DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL = "DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL",
     DELBEREGNING_UTGIFT = "DELBEREGNING_UTGIFT",
     DELBEREGNINGSAMVAeRSFRADRAG = "DELBEREGNING_SAMVÆRSFRADRAG",
+    DELBEREGNING_NETTO_TILSYNSUTGIFT = "DELBEREGNING_NETTO_TILSYNSUTGIFT",
+    DELBEREGNING_BARNETILLEGG_SKATTESATS = "DELBEREGNING_BARNETILLEGG_SKATTESATS",
+    DELBEREGNING_NETTO_BARNETILLEGG = "DELBEREGNING_NETTO_BARNETILLEGG",
+    DELBEREGNING_UNDERHOLDSKOSTNAD = "DELBEREGNING_UNDERHOLDSKOSTNAD",
+    SLUTTBEREGNING_BARNEBIDRAG = "SLUTTBEREGNING_BARNEBIDRAG",
+    BARNETILLEGG_PERIODE = "BARNETILLEGG_PERIODE",
     PERSON = "PERSON",
     PERSON_BIDRAGSMOTTAKER = "PERSON_BIDRAGSMOTTAKER",
     PERSON_BIDRAGSPLIKTIG = "PERSON_BIDRAGSPLIKTIG",
@@ -97,11 +110,13 @@ export enum Grunnlagstype {
     PERSONSOKNADSBARN = "PERSON_SØKNADSBARN",
     PERSON_HUSSTANDSMEDLEM = "PERSON_HUSSTANDSMEDLEM",
     PERSON_BARN_BIDRAGSPLIKTIG = "PERSON_BARN_BIDRAGSPLIKTIG",
+    PERSON_BARN_BIDRAGSMOTTAKER = "PERSON_BARN_BIDRAGSMOTTAKER",
     BEREGNET_INNTEKT = "BEREGNET_INNTEKT",
     INNHENTET_HUSSTANDSMEDLEM = "INNHENTET_HUSSTANDSMEDLEM",
     INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN = "INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN",
     INNHENTET_SIVILSTAND = "INNHENTET_SIVILSTAND",
     INNHENTET_ARBEIDSFORHOLD = "INNHENTET_ARBEIDSFORHOLD",
+    INNHENTETTILLEGGSTONAD = "INNHENTET_TILLEGGSTØNAD",
     INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE = "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
     INNHENTET_INNTEKT_AORDNING = "INNHENTET_INNTEKT_AORDNING",
     INNHENTET_INNTEKT_BARNETILLEGG = "INNHENTET_INNTEKT_BARNETILLEGG",
@@ -187,6 +202,8 @@ export interface OpprettGrunnlagRequestDto {
     grunnlagsreferanseListe: string[];
     /** Referanse til personobjektet grunnlaget gjelder */
     gjelderReferanse?: string;
+    /** Referanse til barn personobjektet grunnlaget gjelder */
+    gjelderBarnReferanse?: string;
 }
 
 /** Liste over alle perioder som inngår i stønadsendringen */
@@ -244,7 +261,7 @@ export interface OpprettStonadsendringRequestDto {
 
 export interface OpprettVedtakRequestDto {
     /** Hva er kilden til vedtaket. Automatisk eller manuelt */
-    kilde: "MANUELT" | "AUTOMATISK";
+    kilde: OpprettVedtakRequestDtoKildeEnum;
     /** Type vedtak */
     type: Vedtakstype;
     /** Skal bare brukes ved batchkjøring. Id til batchjobb som oppretter vedtaket */
@@ -386,7 +403,7 @@ export interface VedtakForStonad {
     /** Type vedtak */
     type: Vedtakstype;
     /** Hva er kilden til vedtaket. Automatisk eller manuelt */
-    kilde: "MANUELT" | "AUTOMATISK";
+    kilde: VedtakForStonadKildeEnum;
     /** Stønadsendringen for vedtaket */
     stønadsendring: StonadsendringDto;
     /** Referanser til alle behandlinger som ligger som grunnlag til vedtaket */
@@ -479,11 +496,13 @@ export interface GrunnlagDto {
     grunnlagsreferanseListe: string[];
     /** Referanse til personobjektet grunnlaget gjelder */
     gjelderReferanse?: string;
+    /** Referanse til barn personobjektet grunnlaget gjelder */
+    gjelderBarnReferanse?: string;
 }
 
 export interface VedtakDto {
     /** Hva er kilden til vedtaket. Automatisk eller manuelt */
-    kilde: "MANUELT" | "AUTOMATISK";
+    kilde: VedtakDtoKildeEnum;
     /** Type vedtak */
     type: Vedtakstype;
     /** Id til saksbehandler eller batchjobb som opprettet vedtaket. For saksbehandler er ident hentet fra token */
@@ -519,6 +538,24 @@ export interface VedtakDto {
     engangsbeløpListe: EngangsbelopDto[];
     /** Liste med referanser til alle behandlinger som ligger som grunnlag til vedtaket */
     behandlingsreferanseListe: BehandlingsreferanseDto[];
+}
+
+/** Hva er kilden til vedtaket. Automatisk eller manuelt */
+export enum OpprettVedtakRequestDtoKildeEnum {
+    MANUELT = "MANUELT",
+    AUTOMATISK = "AUTOMATISK",
+}
+
+/** Hva er kilden til vedtaket. Automatisk eller manuelt */
+export enum VedtakForStonadKildeEnum {
+    MANUELT = "MANUELT",
+    AUTOMATISK = "AUTOMATISK",
+}
+
+/** Hva er kilden til vedtaket. Automatisk eller manuelt */
+export enum VedtakDtoKildeEnum {
+    MANUELT = "MANUELT",
+    AUTOMATISK = "AUTOMATISK",
 }
 
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from "axios";
@@ -566,10 +603,7 @@ export class HttpClient<SecurityDataType = unknown> {
     private format?: ResponseType;
 
     constructor({ securityWorker, secure, format, ...axiosConfig }: ApiConfig<SecurityDataType> = {}) {
-        this.instance = axios.create({
-            ...axiosConfig,
-            baseURL: axiosConfig.baseURL || "https://bidrag-vedtak-feature.intern.dev.nav.no",
-        });
+        this.instance = axios.create({ ...axiosConfig, baseURL: axiosConfig.baseURL || "http://localhost:8889" });
         this.secure = secure;
         this.format = format;
         this.securityWorker = securityWorker;
@@ -658,7 +692,7 @@ export class HttpClient<SecurityDataType = unknown> {
 /**
  * @title bidrag-vedtak
  * @version v1
- * @baseUrl https://bidrag-vedtak-feature.intern.dev.nav.no
+ * @baseUrl http://localhost:8889
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
     vedtak = {

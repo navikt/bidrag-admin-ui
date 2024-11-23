@@ -156,6 +156,7 @@ interface VedtakDetaljer {
     innhold: Object;
     type?: string;
     gjelderReferanse?: string;
+    gjelderBarnReferanse?: string;
 }
 function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphProps) {
     const {
@@ -188,6 +189,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
                 tittel: grunnlag.referanse,
                 innhold: grunnlag.innhold,
                 gjelderReferanse: grunnlag.gjelderReferanse,
+                gjelderBarnReferanse: grunnlag.gjelderBarnReferanse,
                 type: grunnlag.type,
             };
         if (mermaidResponse.vedtak.nodeId == id)
@@ -289,14 +291,8 @@ function toEchart(tree: TreeChild): EChartsOption {
             triggerOn: "mousemove",
             enterable: true,
             hideDelay: 500,
-            extraCssText: "max-height: 800px; max-width: 1000px; overflow: auto;",
-            // position: function (pos, params, dom, rect, size) {
-            //     // tooltip will be fixed on the right if mouse hovering on the left,
-            //     // and on the left if hovering on the right.
-            //     const obj = { ...pos, top: 40 };
-            //     obj[["left", "right"][+(pos[0] > size.viewSize[0] / 2)]] = 1000;
-            //     return obj;
-            // },
+            extraCssText: "max-height: 800px; width: max-content; overflow: auto;",
+            position: ["0%", "0%"],
         },
         roam: true,
         series: [
@@ -391,6 +387,8 @@ function toEchartData(tree: TreeChild) {
                         <dl>
                             <dt>Gjelder</dt>
                             <dd>${tree.grunnlag?.gjelderReferanse}</dd>
+                             <dt>Gjelder Barn</dt>
+                            <dd>${tree.grunnlag?.gjelderBarnReferanse}</dd>
                             <dt>Grunnlagstype</dt>
                             <dd>${tree.grunnlag?.type}</dd>
                         </dl>
