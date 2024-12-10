@@ -173,6 +173,8 @@ function grunnlagstypeTilVisningsnavn(grunnlag: GrunnlagDto, grunnlagsListe: Gru
             return "Delberegning underholdskostnad";
         case Grunnlagstype.DELBEREGNINGBIDRAGSPLIKTIGESANDELSAeRBIDRAG:
             return "Delberegning bidragspliktiges andel særbidrag";
+        case Grunnlagstype.DELBEREGNING_NETTO_BARNETILLEGG:
+            return "Delberegning netto barnetillegg";
         case Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL:
             return "Delberegning bidragspliktiges andel";
 
@@ -200,10 +202,12 @@ function innhentetTilVisningsnavn(grunnlagstype: Grunnlagstype): string {
             return "Utvidet barnetrygd";
         case Grunnlagstype.INNHENTETINNTEKTKONTANTSTOTTE:
             return "Kontantstøtte";
-        case Grunnlagstype.INNHENTET_INNTEKT_BARNETILSYN:
+        case Grunnlagstype.INNHENTET_BARNETILSYN:
             return "Barnetilsyn";
         case Grunnlagstype.INNHENTET_INNTEKT_BARNETILLEGG:
             return "Barnetillegg";
+        case Grunnlagstype.INNHENTETTILLEGGSSTONAD:
+            return "Tilleggsstønad";
     }
     return "";
 }
@@ -266,6 +270,7 @@ export function engangsbeløpToTreeDto(engangsbeløp: EngangsbelopDto): TreeEnga
         type: engangsbeløp.type,
         sak: engangsbeløp.sak,
         beløp: engangsbeløp.beløp,
+        valutakode: engangsbeløp.valutakode,
         resultatKode: engangsbeløp.resultatkode,
         beløpBetalt: engangsbeløp.betaltBeløp,
         skyldner: engangsbeløp.skyldner,

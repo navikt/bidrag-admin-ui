@@ -288,6 +288,7 @@ function toEchart(tree: TreeChild): EChartsOption {
     return {
         tooltip: {
             trigger: "item",
+            showContent: true,
             triggerOn: "mousemove",
             enterable: true,
             hideDelay: 500,
