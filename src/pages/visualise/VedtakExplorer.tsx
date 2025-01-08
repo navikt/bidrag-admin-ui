@@ -293,7 +293,7 @@ function toEchart(tree: TreeChild): EChartsOption {
             enterable: true,
             hideDelay: 500,
             extraCssText: "max-height: 800px; width: 600px; overflow: auto;",
-            position: ["70%", "0%"],
+            position: ["60%", "0%"],
         },
         roam: true,
         series: [
