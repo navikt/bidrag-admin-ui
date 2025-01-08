@@ -96,7 +96,7 @@ function VisualiserVedtakGraph({ behandlingId, vedtakId }: VedtakExplorerGraphPr
     const [searchParams, setSearchParams] = useSearchParams();
     type GrafType = "treegraph" | "flowchart";
     const [state, setState] = useState<GrafType>(
-        searchParams.get("graftype") == "treegraph" ? "treegraph" : "flowchart"
+        searchParams.get("graftype") == "flowchart" ? "flowchart" : "treegraph"
     );
 
     if (behandlingId == null && vedtakId == null) {
@@ -292,8 +292,8 @@ function toEchart(tree: TreeChild): EChartsOption {
             triggerOn: "mousemove",
             enterable: true,
             hideDelay: 500,
-            extraCssText: "max-height: 800px; width: max-content; overflow: auto;",
-            position: ["0%", "0%"],
+            extraCssText: "max-height: 800px; width: 600px; overflow: auto;",
+            position: ["70%", "0%"],
         },
         roam: true,
         series: [
