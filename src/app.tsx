@@ -6,6 +6,8 @@ import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
+import DokumentasjonPage from "./pages/DokumentasjonPage";
+import PageWrapper from "./pages/PageWrapper";
 import VedtakExplorer from "./pages/visualise/VedtakExplorer";
 
 const queryClient = new QueryClient({
@@ -55,6 +57,9 @@ export default function App() {
                             <Route path="/admin/vedtak/explorer">
                                 <Route index element={<VedtakExplorerWrapper />} />
                             </Route>
+                            <Route path="/admin/dokumentasjon">
+                                <Route index element={<DokumentasjonWrapper />} />
+                            </Route>
                         </Routes>
                     </BrowserRouter>
                 </ErrorBoundary>
@@ -62,6 +67,21 @@ export default function App() {
         </FlagProvider>
     );
 }
+const DokumentasjonWrapper = () => {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex justify-center">
+                    <Loader size="3xlarge" title="venter..." variant="interaction" />
+                </div>
+            }
+        >
+            <PageWrapper name="dokumentasjon">
+                <DokumentasjonPage />
+            </PageWrapper>
+        </Suspense>
+    );
+};
 
 const VedtakExplorerWrapper = () => {
     return (

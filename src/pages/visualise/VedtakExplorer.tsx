@@ -19,8 +19,10 @@ import { mapVedtakToTree } from "./VedtakToGraphMapper";
 import { lastVisningsnavn } from "./VisningsnavnMapper";
 mermaid.initialize({
     startOnLoad: true,
-    flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis" },
+    flowchart: { useMaxWidth: true, useWidth: true, htmlLabels: true, curve: "basis" },
     securityLevel: "loose",
+    look: "handDrawn",
+    theme: "base",
 });
 
 interface VedtakExplorerGraphProps {
@@ -173,7 +175,7 @@ function VedtakMermaidFlowChart({ behandlingId, vedtakId }: VedtakExplorerGraphP
 
     const isRendering = useRef(false);
     const [showDetails, setShowDetails] = useState<VedtakDetaljer | null>(null);
-    const divRef = useRef<HTMLDivElement>();
+    const divRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         // @ts-ignore
         window.callback = (id) => {
@@ -367,8 +369,8 @@ function toEchartData(tree: TreeChild) {
         value: tree.grunnlag
             ? JSON.stringify(tree?.grunnlag?.innhold, null, 2)
             : tree?.innhold
-              ? JSON.stringify(tree?.innhold, null, 2)
-              : "",
+                ? JSON.stringify(tree?.innhold, null, 2)
+                : "",
         itemStyle: {
             borderType: getBordertype(),
         },
@@ -382,8 +384,7 @@ function toEchartData(tree: TreeChild) {
                 return `
                 <strong style="font-size: 18px">${v.name}</strong>:
                 <br/>
-                ${
-                    tree.grunnlag
+                ${tree.grunnlag
                         ? `
                         <dl>
                             <dt>Gjelder</dt>
@@ -395,7 +396,7 @@ function toEchartData(tree: TreeChild) {
                         </dl>
                 <br/>`
                         : ""
-                }
+                    }
                 <pre>${v.value.replaceAll("\\n", "\n")}</pre>`;
             },
         },
