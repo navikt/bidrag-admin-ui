@@ -4,13 +4,14 @@ import "react-lowlight/all";
 
 import { TreeItem } from "@mui/x-tree-view";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
-import { Box, Heading, Modal, VStack } from "@navikt/ds-react";
+import { Box, Heading, Loader, Modal, Switch, VStack } from "@navikt/ds-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import kotlin from "highlight.js/lib/languages/kotlin";
 import Markdown from "marked-react";
 import mermaid from "mermaid";
 import { Octokit } from "octokit";
 import { ChangeEvent, createContext, useContext, useEffect, useRef, useState } from "react";
+import React from "react";
 import Lowlight from "react-lowlight";
 import svgPanZoom from "svg-pan-zoom";
 Lowlight.registerLanguage("kotlin", kotlin);
@@ -49,25 +50,6 @@ export const useAppContext = () => {
 };
 export default function DokumentasjonPage() {
     const [showContent, setShowContent] = useState<string | undefined>();
-    const { data: content } = useSuspenseQuery({
-        queryKey: ["gitPage"],
-        queryFn: async (): Promise<GithubContent[]> => {
-            const response = await octokit.request<GithubContent>("GET /repos/navikt/bidrag-dokumentasjon/contents", {
-                owner: "navikt",
-                repo: "bidrag-dokumentasjon",
-            });
-            return response.data as GithubContent[];
-            // return [];
-        },
-    });
-
-    async function updateShowedContent(link: string) {
-        if (link.startsWith("folder_")) return;
-        const content = await fetch(link);
-        content.text().then((data) => {
-            setShowContent(data);
-        });
-    }
 
     async function readFileAsText(ev: ChangeEvent<HTMLInputElement>) {
         const files = ev.target.files;
@@ -82,7 +64,6 @@ export default function DokumentasjonPage() {
         setShowContent(fileBuffer);
     }
 
-    const files = content?.filter((file) => file.type === "file") ?? [];
     return (
         <AppContext.Provider value={{ showContent, setShowContent }}>
             <div className="h-full w-full flex flex-row">
@@ -113,24 +94,58 @@ export default function DokumentasjonPage() {
                         padding={"2"}
                     >
                         <Heading size="xsmall">Github</Heading>
-                        <SimpleTreeView
-                            defaultExpandedItems={["folder_root"]}
-                            onItemClick={(event, itemId) => updateShowedContent(itemId)}
-                        >
-                            <TreeItem itemId="folder_root" label={"bidrag-dokumentasjon"}>
-                                {files.map((file) => (
-                                    <TreeItem itemId={file.download_url} label={file.name} />
-                                ))}
-                            </TreeItem>
-                            {content
-                                ?.filter((file) => file.type === "dir")
-                                .map((folder) => <GithubTree folder={folder} />)}
-                        </SimpleTreeView>
+                        <React.Suspense fallback={<Loader />}>
+                            <GithubTreeView />
+                        </React.Suspense>
                     </Box>
                 </VStack>
                 <MermaidChart />
             </div>
         </AppContext.Provider>
+    );
+}
+function GithubTreeView() {
+    const { setShowContent } = useAppContext();
+    const [githubEnabled, setGithubEnabled] = useState(false);
+
+    async function updateShowedContent(link: string) {
+        if (link.startsWith("folder_")) return;
+        const content = await fetch(link);
+        content.text().then((data) => {
+            setShowContent(data);
+        });
+    }
+
+    const { data: content } = useSuspenseQuery({
+        queryKey: ["gitPage", githubEnabled],
+        queryFn: async (): Promise<GithubContent[]> => {
+            if (!githubEnabled) return [];
+            const response = await octokit.request<GithubContent>("GET /repos/navikt/bidrag-dokumentasjon/contents", {
+                owner: "navikt",
+                repo: "bidrag-dokumentasjon",
+            });
+            return response.data as GithubContent[];
+        },
+    });
+    const files = content?.filter((file) => file.type === "file") ?? [];
+
+    return (
+        <>
+            <Switch size="small" checked={githubEnabled} onChange={(e) => setGithubEnabled(e.target.checked)}>
+                Hent fra github
+            </Switch>
+            <SimpleTreeView
+                defaultExpandedItems={["folder_root"]}
+                onItemClick={(event, itemId) => updateShowedContent(itemId)}
+            >
+                <TreeItem itemId="folder_root" label={"bidrag-dokumentasjon"}>
+                    {files.map((file) => (
+                        <TreeItem itemId={file.download_url} label={file.name} />
+                    ))}
+                    {content?.filter((file) => file.type === "dir").map((folder) => <GithubTree folder={folder} />)}
+                </TreeItem>
+            </SimpleTreeView>
+        </>
     );
 }
 function GithubTree({ folder }: { folder: GithubContent }) {
