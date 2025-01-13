@@ -6,15 +6,16 @@ import { TreeItem } from "@mui/x-tree-view";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { Box, Heading, Loader, Modal, Switch, VStack } from "@navikt/ds-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import kotlin from "highlight.js/lib/languages/kotlin";
-import Markdown from "marked-react";
 import mermaid from "mermaid";
 import { Octokit } from "octokit";
 import { ChangeEvent, createContext, useContext, useEffect, useRef, useState } from "react";
 import React from "react";
-import Lowlight from "react-lowlight";
+import Markdown from "react-markdown";
+import remarkRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
 import svgPanZoom from "svg-pan-zoom";
-Lowlight.registerLanguage("kotlin", kotlin);
+
+import { MarkdownComponents } from "../components/CustomMarkdown";
 
 const octokit = new Octokit({});
 export interface GithubContent {
@@ -36,9 +37,14 @@ export interface Links {
     html: string;
 }
 
+type FileType = "mermaid" | "markdown";
+type Content = {
+    type: FileType;
+    content: string;
+};
 interface AppContextType {
-    showContent?: string;
-    setShowContent: (string: string) => void;
+    showContent?: Content;
+    setShowContent: (content: Content) => void;
 }
 const AppContext = createContext<AppContextType | undefined>(undefined);
 export const useAppContext = () => {
@@ -49,15 +55,15 @@ export const useAppContext = () => {
     return context;
 };
 export default function DokumentasjonPage() {
-    const [showContent, setShowContent] = useState<string | undefined>();
+    const [showContent, setShowContent] = useState<Content | undefined>();
 
-    async function readFileAsText(ev: ChangeEvent<HTMLInputElement>) {
+    async function readFileAsText(ev: ChangeEvent<HTMLInputElement>): Promise<Content> {
         const files = ev.target.files;
         if (files.length == 0) return;
         const file = ev.target.files[0];
         const fileBuffer = await file.text();
 
-        return fileBuffer;
+        return { content: fileBuffer, type: file.name.endsWith(".mermaid") ? "mermaid" : "markdown" };
     }
     async function openFile(ev: ChangeEvent<HTMLInputElement>) {
         const fileBuffer = await readFileAsText(ev);
@@ -80,7 +86,7 @@ export default function DokumentasjonPage() {
                             id="file_input"
                             type="file"
                             name="Last fra fil"
-                            accept="*/.mermaid"
+                            accept="*/.mermaid, *.md, *.markdown"
                             onClick={(ev) => ((ev.target as HTMLInputElement).value = "")}
                             onChange={openFile}
                             className="border"
@@ -112,7 +118,7 @@ function GithubTreeView() {
         if (link.startsWith("folder_")) return;
         const content = await fetch(link);
         content.text().then((data) => {
-            setShowContent(data);
+            setShowContent({ content: data, type: link.endsWith(".mermaid") ? "mermaid" : "markdown" });
         });
     }
 
@@ -181,7 +187,7 @@ function GithubTree({ folder }: { folder: GithubContent }) {
 
 function MermaidChart() {
     const { showContent } = useAppContext();
-    const [showDetailsKotlin, setShowDetailsKotlin] = useState<string | null>(null);
+    const [showDetailsMarkdown, setShowDetailsMarkdown] = useState<string | null>(null);
 
     const isRendering = useRef(false);
     const divRef = useRef<HTMLDivElement>(null);
@@ -191,15 +197,27 @@ function MermaidChart() {
             fetch(link)
                 .then((res) => res.text())
                 .then(async (data) => {
-                    setShowDetailsKotlin(`${"```kotlin\n"}${data}\n${"```"}`);
+                    setShowDetailsMarkdown(`${"```kotlin\n"}${data}\n${"```"}`);
+                });
+        };
+        // @ts-ignore
+        window.visGrunnlag = (link: string) => {
+            fetch(`https://raw.githubusercontent.com/navikt/bidrag-dokumentasjon/refs/heads/main/${link}`)
+                .then((res) => res.text())
+                .then(async (data) => {
+                    setShowDetailsMarkdown(data);
                 });
         };
     }, []);
     useEffect(() => {
         if (!showContent) return;
+        if (showContent?.type != "mermaid") {
+            document.getElementById("mermaidSvg")?.remove();
+            return;
+        }
         isRendering.current = true;
         mermaid
-            .render("mermaidSvg", showContent, divRef.current)
+            .render("mermaidSvg", showContent.content, divRef.current)
             .then((res) => {
                 divRef.current.innerHTML = res.svg;
                 if (res.bindFunctions) {
@@ -209,24 +227,30 @@ function MermaidChart() {
             })
             .catch((e) => console.error("HERE", e));
     }, [mermaid, showContent]);
-    const renderer = {
-        code(snippet, lang) {
-            return <Lowlight language={lang} value={snippet} />;
-        },
-    };
+
     return (
         <>
             <Modal
                 style={{ maxHeight: "1000px", maxWidth: "max-content" }}
-                open={showDetailsKotlin != null}
+                open={showDetailsMarkdown != null}
                 closeOnBackdropClick
-                onClose={() => setShowDetailsKotlin(null)}
+                onClose={() => setShowDetailsMarkdown(null)}
             >
                 <Modal.Body>
-                    <Markdown value={showDetailsKotlin} renderer={renderer} />
+                    <Markdown components={MarkdownComponents} remarkPlugins={[remarkGfm]} rehypePlugins={[remarkRaw]}>
+                        {showDetailsMarkdown}
+                    </Markdown>
                 </Modal.Body>
             </Modal>
-            <div ref={divRef} className="mermaid h-full grow w-full max-w-full [&_svg]:!max-w-full" />
+            {showContent?.type == "mermaid" ? (
+                <div ref={divRef} className="mermaid h-full grow w-full max-w-full [&_svg]:!max-w-full" />
+            ) : showContent ? (
+                <div className="pt-8 m-auto overflow-y-auto h-full w-[1100px] pl-8 pr-8 pb-8">
+                    <Markdown components={MarkdownComponents} remarkPlugins={[remarkGfm]} rehypePlugins={[remarkRaw]}>
+                        {showContent.content}
+                    </Markdown>
+                </div>
+            ) : null}
         </>
     );
 }
