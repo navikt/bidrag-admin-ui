@@ -8,6 +8,7 @@ module.exports = merge(webpackCommon, {
         // Defined as variable: default-value
         new EnvironmentPlugin({
             STATIC_FILES_URL: "",
+            BIDRAG_ADMIN_URL: "",
             BIDRAG_VEDTAK_URL: "",
             BIDRAG_BEHANDLING_URL: "",
             UNLEASH_FRONTEND_TOKEN: "",

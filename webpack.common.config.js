@@ -16,6 +16,13 @@ module.exports = {
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js", ".jsx"],
+        alias: {
+            "@api": path.resolve("./src/api"),
+            "@assets": path.resolve("./src/assets"),
+            "@common": path.resolve("./src/common"),
+            "@commonTypes": path.resolve("./src/types"),
+            "@utils": path.resolve("./src/utils"),
+        },
     },
     module: {
         rules: [
