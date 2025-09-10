@@ -56,6 +56,8 @@ export interface EndringsLoggDto {
      */
     dato: string;
     /** @format date */
+    opprettetTidspunkt: string;
+    /** @format date */
     aktivFra?: string;
     /** @format date */
     aktivTil?: string;
@@ -352,7 +354,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          */
         hentAlleEndringslogg: (
             query?: {
-                skjermbilde?: EndringsloggTilhorerSkjermbilde[];
+                skjermbilde?: EndringsloggTilhorerSkjermbilde;
+                bareAktive?: boolean;
             },
             params: RequestParams = {}
         ) =>
