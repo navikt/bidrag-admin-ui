@@ -511,12 +511,6 @@ export default function EndringsloggForm({
                                     <Controller
                                         name="aktivTilTidspunkt"
                                         control={formMethods.control}
-                                        rules={{
-                                            required: {
-                                                value: true,
-                                                message: "Dette feltet er påkrevd",
-                                            },
-                                        }}
                                         render={({ field, fieldState }) => (
                                             <FormDatePicker
                                                 {...field}

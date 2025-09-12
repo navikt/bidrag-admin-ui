@@ -1,11 +1,12 @@
-import { Endringstype } from "@api/BidragAdminApi";
-import { PencilIcon } from "@navikt/aksel-icons";
-import { Button, Table, Tag, VStack } from "@navikt/ds-react";
-import React from "react";
+import { AktivForMiljo, EndringsLoggDto, Endringstype } from "@api/BidragAdminApi";
+import { MagnifyingGlassIcon, PencilIcon } from "@navikt/aksel-icons";
+import { BodyLong, Button, Heading, Modal, Pagination, Switch, Table, Tag, VStack } from "@navikt/ds-react";
+import { useQueryClient } from "@tanstack/react-query";
+import React, { useState } from "react";
 import { Link as ReactRouterLink } from "react-router";
 
 import { EndringsloggTilhorerSkjermbildeToVisningsnavn } from "../../components/endringslogg/EndringsloggForm";
-import { useHentEndringslogger } from "../../hooks/useApiData";
+import { useAktiverEndringslogg, useDeaktiverEndringslogg, useHentEndringslogger } from "../../hooks/useApiData";
 
 const format = (date: Date) => {
     const y = date.getFullYear();
@@ -29,58 +30,204 @@ export const EndringstypeToTagMapper = {
     },
 };
 
+const EndringsModal = ({
+    open,
+    onClose,
+    selectedEndringslogg,
+    closeOnBackdropClick,
+}: {
+    open: boolean;
+    onClose: () => void;
+    selectedEndringslogg: EndringsLoggDto;
+    closeOnBackdropClick?: boolean;
+}) => {
+    const [pageState, setPageState] = useState(1);
+
+    return (
+        <Modal
+            open={open}
+            onClose={() => onClose()}
+            header={{ heading: selectedEndringslogg.tittel }}
+            closeOnBackdropClick={closeOnBackdropClick}
+        >
+            <>
+                <Modal.Body className="grid gap-4">
+                    <Heading size="xsmall" className="flex gap-2">
+                        {selectedEndringslogg.endringer[pageState - 1].tittel}{" "}
+                        <Tag
+                            variant={
+                                EndringstypeToTagMapper[selectedEndringslogg.endringer[pageState - 1].endringstype].tag
+                            }
+                            size="xsmall"
+                        >
+                            {EndringstypeToTagMapper[selectedEndringslogg.endringer[pageState - 1].endringstype].tekst}
+                        </Tag>
+                    </Heading>
+
+                    <BodyLong as="div" size="small">
+                        <div
+                            style={{ overflowWrap: "break-word", width: "38rem", height: "40rem" }}
+                            dangerouslySetInnerHTML={{ __html: selectedEndringslogg.endringer[pageState - 1].innhold }}
+                        />
+                    </BodyLong>
+                </Modal.Body>
+                <Modal.Footer style={{ height: "4rem", justifyContent: "center" }}>
+                    {selectedEndringslogg.endringer.length > 1 && (
+                        <Pagination
+                            page={pageState}
+                            onPageChange={(page: number) => setPageState(page)}
+                            count={selectedEndringslogg.endringer.length}
+                            boundaryCount={1}
+                            siblingCount={1}
+                            size="xsmall"
+                        />
+                    )}
+                </Modal.Footer>
+            </>
+        </Modal>
+    );
+};
+
+const AktiverSwitch = ({
+    endringsloggId,
+    aktiveMiljøer,
+    miljø,
+}: {
+    endringsloggId: number;
+    aktiveMiljøer: AktivForMiljo[];
+    miljø: AktivForMiljo;
+}) => {
+    const queryClient = useQueryClient();
+    const aktiver = useAktiverEndringslogg(endringsloggId);
+    const deaktiver = useDeaktiverEndringslogg(endringsloggId);
+
+    const onSuccess = (response) => {
+        queryClient.setQueryData<EndringsLoggDto[]>(["endringslogger"], (currentData: EndringsLoggDto[]) => {
+            return currentData?.map((endring) => {
+                if (endring.id === response.id) {
+                    return response;
+                }
+                return endring;
+            });
+        });
+        queryClient.setQueryData<EndringsLoggDto>(["endringslogg", endringsloggId], () => response);
+    };
+
+    const onAktiverDeaktiver = (checked: boolean) => {
+        if (checked) {
+            aktiver.mutate(miljø, { onSuccess });
+        } else {
+            deaktiver.mutate(miljø, { onSuccess });
+        }
+    };
+
+    return (
+        <Switch
+            checked={aktiveMiljøer.some((aktivForMiljø) => aktivForMiljø === miljø)}
+            onChange={(e) => onAktiverDeaktiver(e.target.checked)}
+            size="small"
+            hideLabel
+            loading={aktiver.isPending || deaktiver.isPending}
+        >
+            Aktiver
+        </Switch>
+    );
+};
+
 export const EndringsloggIndexPage = () => {
     const endringslogger = useHentEndringslogger();
+    const [previewed, setPreviewed] = useState<EndringsLoggDto | null>(null);
     return (
-        <VStack gap="4">
-            <Button variant="secondary" size="small" as={ReactRouterLink} to="/admin/endringslogg/ny" className="w-max">
-                + Lag ny
-            </Button>
-            <Table zebraStripes size="small">
-                <Table.Header>
-                    <Table.Row>
-                        <Table.HeaderCell scope="col">Tittel</Table.HeaderCell>
-                        <Table.HeaderCell scope="col">Gjelder</Table.HeaderCell>
-                        <Table.HeaderCell scope="col">Dato</Table.HeaderCell>
-                        <Table.HeaderCell scope="col">Endringstyper</Table.HeaderCell>
-                        <Table.HeaderCell scope="col"></Table.HeaderCell>
-                    </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                    {endringslogger.data.map(({ id, tittel, dato, gjelder, endringstyper }, i) => {
-                        return (
-                            <Table.Row key={i + tittel + dato}>
-                                <Table.HeaderCell scope="row">{tittel}</Table.HeaderCell>
-                                <Table.DataCell>
-                                    {EndringsloggTilhorerSkjermbildeToVisningsnavn[gjelder]}
-                                </Table.DataCell>
-                                <Table.DataCell>{format(new Date(dato))}</Table.DataCell>
-                                <Table.DataCell>
-                                    {endringstyper.map((endringstype, i) => (
-                                        <Tag
-                                            key={i + endringstype}
-                                            variant={EndringstypeToTagMapper[endringstype].tag}
-                                            size="xsmall"
-                                            className="mr-2"
-                                        >
-                                            {EndringstypeToTagMapper[endringstype].tekst}
-                                        </Tag>
-                                    ))}
-                                </Table.DataCell>
-                                <Table.DataCell>
-                                    <Button
-                                        variant="tertiary"
-                                        size="small"
-                                        as={ReactRouterLink}
-                                        to={`/admin/endringslogg/${id}`}
-                                        icon={<PencilIcon title="Rediger" />}
-                                    />
-                                </Table.DataCell>
-                            </Table.Row>
-                        );
-                    })}
-                </Table.Body>
-            </Table>
-        </VStack>
+        <>
+            <VStack gap="4">
+                <Button
+                    variant="secondary"
+                    size="small"
+                    as={ReactRouterLink}
+                    to="/admin/endringslogg/ny"
+                    className="w-max"
+                >
+                    + Lag ny
+                </Button>
+                <Table zebraStripes size="small">
+                    <Table.Header>
+                        <Table.Row>
+                            <Table.HeaderCell scope="col">Tittel</Table.HeaderCell>
+                            <Table.HeaderCell scope="col">Gjelder</Table.HeaderCell>
+                            <Table.HeaderCell scope="col">Dato</Table.HeaderCell>
+                            <Table.HeaderCell scope="col">Endringstyper</Table.HeaderCell>
+                            <Table.HeaderCell scope="col">Aktiver (Prod)</Table.HeaderCell>
+                            <Table.HeaderCell scope="col">Aktiver (Dev)</Table.HeaderCell>
+                            <Table.HeaderCell scope="col"></Table.HeaderCell>
+                            <Table.HeaderCell scope="col"></Table.HeaderCell>
+                        </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                        {endringslogger.data.map((endringslogg, i) => {
+                            return (
+                                <Table.Row key={i + endringslogg.tittel + endringslogg.dato}>
+                                    <Table.HeaderCell scope="row">{endringslogg.tittel}</Table.HeaderCell>
+                                    <Table.DataCell>
+                                        {EndringsloggTilhorerSkjermbildeToVisningsnavn[endringslogg.gjelder]}
+                                    </Table.DataCell>
+                                    <Table.DataCell>{format(new Date(endringslogg.dato))}</Table.DataCell>
+                                    <Table.DataCell>
+                                        {endringslogg.endringstyper.map((endringstype, i) => (
+                                            <Tag
+                                                key={i + endringstype}
+                                                variant={EndringstypeToTagMapper[endringstype].tag}
+                                                size="xsmall"
+                                                className="mr-2"
+                                            >
+                                                {EndringstypeToTagMapper[endringstype].tekst}
+                                            </Tag>
+                                        ))}
+                                    </Table.DataCell>
+                                    <Table.DataCell>
+                                        <AktiverSwitch
+                                            endringsloggId={endringslogg.id}
+                                            aktiveMiljøer={endringslogg.aktiveMiljøer}
+                                            miljø={AktivForMiljo.PROD}
+                                        />
+                                    </Table.DataCell>
+                                    <Table.DataCell>
+                                        <AktiverSwitch
+                                            endringsloggId={endringslogg.id}
+                                            aktiveMiljøer={endringslogg.aktiveMiljøer}
+                                            miljø={AktivForMiljo.DEV}
+                                        />
+                                    </Table.DataCell>
+                                    <Table.DataCell>
+                                        <Button
+                                            variant="tertiary"
+                                            size="small"
+                                            icon={<MagnifyingGlassIcon title="Forhåndsvisning" />}
+                                            onClick={() => setPreviewed(endringslogg)}
+                                        />
+                                    </Table.DataCell>
+                                    <Table.DataCell>
+                                        <Button
+                                            variant="tertiary"
+                                            size="small"
+                                            as={ReactRouterLink}
+                                            to={`/admin/endringslogg/${endringslogg.id}`}
+                                            icon={<PencilIcon title="Rediger" />}
+                                        />
+                                    </Table.DataCell>
+                                </Table.Row>
+                            );
+                        })}
+                    </Table.Body>
+                </Table>
+            </VStack>
+            {previewed && (
+                <EndringsModal
+                    open={!!previewed}
+                    onClose={() => setPreviewed(null)}
+                    selectedEndringslogg={previewed}
+                    closeOnBackdropClick
+                />
+            )}
+        </>
     );
 };

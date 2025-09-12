@@ -1,5 +1,10 @@
 import { useBidragAdminApi } from "@api/api";
-import { EndringsLoggDto, OppdaterEndringsloggRequest, OpprettEndringsloggRequest } from "@api/BidragAdminApi";
+import {
+    AktivForMiljo,
+    EndringsLoggDto,
+    OppdaterEndringsloggRequest,
+    OpprettEndringsloggRequest,
+} from "@api/BidragAdminApi";
 import { LoggerService } from "@navikt/bidrag-ui-common";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
@@ -8,7 +13,7 @@ export const useHentEndringslogger = () => {
     return useSuspenseQuery({
         queryKey: ["endringslogger"],
         queryFn: async (): Promise<EndringsLoggDto[]> => {
-            const { data } = await adminApi.endringslogg.hentAlleEndringslogg();
+            const { data } = await adminApi.endringslogg.hentAlleEndringslogg({ bareAktive: false });
             return data;
         },
     });
@@ -57,18 +62,34 @@ export const useHentEndringslogg = (endringsloggId: number) => {
     });
 };
 
-export const useDeleteEndringslogg = (endringsloggId: number) => {
+export const useAktiverEndringslogg = (endringsloggId: number) => {
     const adminApi = useBidragAdminApi();
 
     return useMutation({
-        mutationFn: async (payload: OppdaterEndringsloggRequest): Promise<EndringsLoggDto> => {
-            const { data } = await adminApi.endringslogg.oppdaterEndringslogg(endringsloggId, payload);
+        mutationFn: async (environment: AktivForMiljo): Promise<EndringsLoggDto> => {
+            const { data } = await adminApi.endringslogg.aktiverEndringslogg(endringsloggId, { environment });
             return data;
         },
         networkMode: "always",
         onError: (error) => {
             console.log("onError", error);
-            LoggerService.error("Feil ved oppreting av endringslogg", error);
+            LoggerService.error("Feil ved aktivering av endringslogg", error);
+        },
+    });
+};
+
+export const useDeaktiverEndringslogg = (endringsloggId: number) => {
+    const adminApi = useBidragAdminApi();
+
+    return useMutation({
+        mutationFn: async (environment: AktivForMiljo): Promise<EndringsLoggDto> => {
+            const { data } = await adminApi.endringslogg.deaktiverEndringslogg(endringsloggId, { environment });
+            return data;
+        },
+        networkMode: "always",
+        onError: (error) => {
+            console.log("onError", error);
+            LoggerService.error("Feil ved deaktivering av endringslogg", error);
         },
     });
 };

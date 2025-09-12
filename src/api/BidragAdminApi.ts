@@ -47,6 +47,11 @@ export interface OppdaterEndringsloggRequest {
     endringstyper?: Endringstype[];
 }
 
+export enum AktivForMiljo {
+    PROD = "PROD",
+    DEV = "DEV",
+}
+
 export interface EndringsLoggDto {
     /** @format int64 */
     id: number;
@@ -61,6 +66,7 @@ export interface EndringsLoggDto {
     aktivFra?: string;
     /** @format date */
     aktivTil?: string;
+    aktiveMiljøer: AktivForMiljo[];
     /** Hvilken system/skjermbilde endringsloggen gjelder for */
     gjelder: EndringsloggTilhorerSkjermbilde;
     /** Tittel på endringsloggen */
@@ -448,10 +454,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @request PATCH:/endringslogg/{endringsloggId}/deaktiver
          * @secure
          */
-        deaktiverEndringslogg: (endringsloggId: number, params: RequestParams = {}) =>
+        deaktiverEndringslogg: (
+            endringsloggId: number,
+            query: {
+                environment: AktivForMiljo;
+            },
+            params: RequestParams = {}
+        ) =>
             this.request<EndringsLoggDto, any>({
                 path: `/endringslogg/${endringsloggId}/deaktiver`,
                 method: "PATCH",
+                query: query,
                 secure: true,
                 ...params,
             }),
@@ -465,10 +478,17 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @request PATCH:/endringslogg/{endringsloggId}/aktiver
          * @secure
          */
-        aktiverEndringslogg: (endringsloggId: number, params: RequestParams = {}) =>
+        aktiverEndringslogg: (
+            endringsloggId: number,
+            query: {
+                environment: AktivForMiljo;
+            },
+            params: RequestParams = {}
+        ) =>
             this.request<EndringsLoggDto, any>({
                 path: `/endringslogg/${endringsloggId}/aktiver`,
                 method: "PATCH",
+                query: query,
                 secure: true,
                 ...params,
             }),
