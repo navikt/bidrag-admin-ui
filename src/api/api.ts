@@ -4,4 +4,7 @@ import { useApi } from "@navikt/bidrag-ui-common";
 import environment from "../environment";
 
 export const useBidragAdminApi = () =>
-    useApi(new BidragAdminApi({ baseURL: environment.url.bidragAdmin }), "bidrag-admin", "gcp");
+    useApi(new BidragAdminApi({ baseURL: environment.url.bidragAdmin }), {
+        app: "bidrag-admin",
+        cluster: "gcp",
+    });
