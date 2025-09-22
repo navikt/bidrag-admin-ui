@@ -1,4 +1,4 @@
-import { AktivForMiljo, EndringsLoggDto, Endringstype } from "@api/BidragAdminApi";
+import { EndringsLoggDto, Endringstype } from "@api/BidragAdminApi";
 import { MagnifyingGlassIcon, PencilIcon } from "@navikt/aksel-icons";
 import { BodyLong, Button, Heading, Modal, Pagination, Switch, Table, Tag, VStack } from "@navikt/ds-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -88,18 +88,10 @@ const EndringsModal = ({
     );
 };
 
-const AktiverSwitch = ({
-    endringsloggId,
-    aktiveMiljøer,
-    miljø,
-}: {
-    endringsloggId: number;
-    aktiveMiljøer: AktivForMiljo[];
-    miljø: AktivForMiljo;
-}) => {
+const AktiverSwitch = ({ endringsloggId, aktiv }: { endringsloggId: number; aktiv: boolean }) => {
     const queryClient = useQueryClient();
-    const aktiver = useAktiverEndringslogg(endringsloggId);
-    const deaktiver = useDeaktiverEndringslogg(endringsloggId);
+    const aktiver = useAktiverEndringslogg();
+    const deaktiver = useDeaktiverEndringslogg();
 
     const onSuccess = (response) => {
         queryClient.setQueryData<EndringsLoggDto[]>(["endringslogger"], (currentData: EndringsLoggDto[]) => {
@@ -115,15 +107,15 @@ const AktiverSwitch = ({
 
     const onAktiverDeaktiver = (checked: boolean) => {
         if (checked) {
-            aktiver.mutate(miljø, { onSuccess });
+            aktiver.mutate(endringsloggId, { onSuccess });
         } else {
-            deaktiver.mutate(miljø, { onSuccess });
+            deaktiver.mutate(endringsloggId, { onSuccess });
         }
     };
 
     return (
         <Switch
-            checked={aktiveMiljøer.some((aktivForMiljø) => aktivForMiljø === miljø)}
+            checked={aktiv}
             onChange={(e) => onAktiverDeaktiver(e.target.checked)}
             size="small"
             hideLabel
@@ -156,8 +148,7 @@ export const EndringsloggIndexPage = () => {
                             <Table.HeaderCell scope="col">Gjelder</Table.HeaderCell>
                             <Table.HeaderCell scope="col">Dato</Table.HeaderCell>
                             <Table.HeaderCell scope="col">Endringstyper</Table.HeaderCell>
-                            <Table.HeaderCell scope="col">Aktiver (Prod)</Table.HeaderCell>
-                            <Table.HeaderCell scope="col">Aktiver (Dev)</Table.HeaderCell>
+                            <Table.HeaderCell scope="col">Aktiver</Table.HeaderCell>
                             <Table.HeaderCell scope="col"></Table.HeaderCell>
                             <Table.HeaderCell scope="col"></Table.HeaderCell>
                         </Table.Row>
@@ -184,18 +175,7 @@ export const EndringsloggIndexPage = () => {
                                         ))}
                                     </Table.DataCell>
                                     <Table.DataCell>
-                                        <AktiverSwitch
-                                            endringsloggId={endringslogg.id}
-                                            aktiveMiljøer={endringslogg.aktiveMiljøer}
-                                            miljø={AktivForMiljo.PROD}
-                                        />
-                                    </Table.DataCell>
-                                    <Table.DataCell>
-                                        <AktiverSwitch
-                                            endringsloggId={endringslogg.id}
-                                            aktiveMiljøer={endringslogg.aktiveMiljøer}
-                                            miljø={AktivForMiljo.DEV}
-                                        />
+                                        <AktiverSwitch endringsloggId={endringslogg.id} aktiv={endringslogg.aktiv} />
                                     </Table.DataCell>
                                     <Table.DataCell>
                                         <Button

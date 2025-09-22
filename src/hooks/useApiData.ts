@@ -1,10 +1,5 @@
 import { useBidragAdminApi } from "@api/api";
-import {
-    AktivForMiljo,
-    EndringsLoggDto,
-    OppdaterEndringsloggRequest,
-    OpprettEndringsloggRequest,
-} from "@api/BidragAdminApi";
+import { EndringsLoggDto, OppdaterEndringsloggRequest, OpprettEndringsloggRequest } from "@api/BidragAdminApi";
 import { LoggerService } from "@navikt/bidrag-ui-common";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
@@ -62,12 +57,12 @@ export const useHentEndringslogg = (endringsloggId: number) => {
     });
 };
 
-export const useAktiverEndringslogg = (endringsloggId: number) => {
+export const useAktiverEndringslogg = () => {
     const adminApi = useBidragAdminApi();
 
     return useMutation({
-        mutationFn: async (environment: AktivForMiljo): Promise<EndringsLoggDto> => {
-            const { data } = await adminApi.endringslogg.aktiverEndringslogg(endringsloggId, { environment });
+        mutationFn: async (endringsloggId: number): Promise<EndringsLoggDto> => {
+            const { data } = await adminApi.endringslogg.aktiverEndringslogg(endringsloggId);
             return data;
         },
         networkMode: "always",
@@ -78,12 +73,12 @@ export const useAktiverEndringslogg = (endringsloggId: number) => {
     });
 };
 
-export const useDeaktiverEndringslogg = (endringsloggId: number) => {
+export const useDeaktiverEndringslogg = () => {
     const adminApi = useBidragAdminApi();
 
     return useMutation({
-        mutationFn: async (environment: AktivForMiljo): Promise<EndringsLoggDto> => {
-            const { data } = await adminApi.endringslogg.deaktiverEndringslogg(endringsloggId, { environment });
+        mutationFn: async (endringsloggId: number): Promise<EndringsLoggDto> => {
+            const { data } = await adminApi.endringslogg.deaktiverEndringslogg(endringsloggId);
             return data;
         },
         networkMode: "always",

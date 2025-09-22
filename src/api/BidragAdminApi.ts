@@ -62,13 +62,14 @@ export interface EndringsLoggDto {
     dato: string;
     /** @format date */
     opprettetTidspunkt: string;
+    aktiv: boolean;
     /** @format date */
     aktivFra?: string;
     /** @format date */
     aktivTil?: string;
-    aktiveMiljøer: AktivForMiljo[];
     /** Hvilken system/skjermbilde endringsloggen gjelder for */
     gjelder: EndringsloggTilhorerSkjermbilde;
+    aktiveMiljøer: AktivForMiljo[];
     /** Tittel på endringsloggen */
     tittel: string;
     endringstyper: Endringstype[];
@@ -353,6 +354,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * No description
          *
          * @tags endringslogg-controller
+         * @name SlettEndringslogg
+         * @summary Hent en enkel endringslogg med id
+         * @request DELETE:/endringslogg/{endringsloggId}
+         * @secure
+         */
+        slettEndringslogg: (endringsloggId: number, params: RequestParams = {}) =>
+            this.request<void, any>({
+                path: `/endringslogg/${endringsloggId}`,
+                method: "DELETE",
+                secure: true,
+                ...params,
+            }),
+
+        /**
+         * No description
+         *
+         * @tags endringslogg-controller
          * @name HentAlleEndringslogg
          * @summary Hent liste over endringslogg for en skjermbilde eller alle
          * @request GET:/endringslogg
@@ -454,17 +472,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @request PATCH:/endringslogg/{endringsloggId}/deaktiver
          * @secure
          */
-        deaktiverEndringslogg: (
-            endringsloggId: number,
-            query: {
-                environment: AktivForMiljo;
-            },
-            params: RequestParams = {}
-        ) =>
+        deaktiverEndringslogg: (endringsloggId: number, params: RequestParams = {}) =>
             this.request<EndringsLoggDto, any>({
                 path: `/endringslogg/${endringsloggId}/deaktiver`,
                 method: "PATCH",
-                query: query,
                 secure: true,
                 ...params,
             }),
@@ -478,17 +489,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
          * @request PATCH:/endringslogg/{endringsloggId}/aktiver
          * @secure
          */
-        aktiverEndringslogg: (
-            endringsloggId: number,
-            query: {
-                environment: AktivForMiljo;
-            },
-            params: RequestParams = {}
-        ) =>
+        aktiverEndringslogg: (endringsloggId: number, params: RequestParams = {}) =>
             this.request<EndringsLoggDto, any>({
                 path: `/endringslogg/${endringsloggId}/aktiver`,
                 method: "PATCH",
-                query: query,
                 secure: true,
                 ...params,
             }),
