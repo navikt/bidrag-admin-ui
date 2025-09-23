@@ -202,10 +202,12 @@ export const EndringsloggIndexPage = () => {
                             <Table.HeaderCell scope="col">Gjelder</Table.HeaderCell>
                             <Table.HeaderCell scope="col">Dato</Table.HeaderCell>
                             <Table.HeaderCell scope="col">Endringstyper</Table.HeaderCell>
-                            <Table.HeaderCell scope="col">Aktiver</Table.HeaderCell>
-                            <Table.HeaderCell scope="col"></Table.HeaderCell>
-                            <Table.HeaderCell scope="col"></Table.HeaderCell>
-                            <Table.HeaderCell scope="col"></Table.HeaderCell>
+                            <Table.HeaderCell scope="col" className="w-[72px]" align="center">
+                                Aktiver
+                            </Table.HeaderCell>
+                            <Table.HeaderCell scope="col" className="w-[48px]" align="center"></Table.HeaderCell>
+                            <Table.HeaderCell scope="col" className="w-[48px]" align="center"></Table.HeaderCell>
+                            <Table.HeaderCell scope="col" className="w-[48px]" align="center"></Table.HeaderCell>
                         </Table.Row>
                     </Table.Header>
                     <Table.Body>
