@@ -2,10 +2,7 @@ import { EndringsLoggDto, EndringsloggTilhorerSkjermbilde, OpprettEndringsloggRe
 import { useQueryClient } from "@tanstack/react-query";
 import React from "react";
 
-import EndringsloggForm, {
-    EndringsloggFormValues,
-    fallbackToNull,
-} from "../../components/endringslogg/EndringsloggForm";
+import EndringsloggForm, { EndringsloggFormValues } from "../../components/endringslogg/EndringsloggForm";
 import { useCreateEndringslogg } from "../../hooks/useApiData";
 
 const createPayload = (formValues: EndringsloggFormValues) => {
@@ -14,8 +11,6 @@ const createPayload = (formValues: EndringsloggFormValues) => {
         tilhørerSkjermbilde: formValues.tilhørerSkjermbilde as EndringsloggTilhorerSkjermbilde,
         sammendrag: formValues.sammendrag?.trim(),
         erPåkrevd: formValues.erPåkrevd,
-        aktivFraTidspunkt: fallbackToNull(formValues.aktivFraTidspunkt),
-        aktivTilTidspunkt: fallbackToNull(formValues.aktivTilTidspunkt),
         endringstyper: formValues.endringer.map((endring) => endring.endringstype),
         endringer: formValues.endringer,
     };

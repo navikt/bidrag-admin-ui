@@ -9,7 +9,6 @@ import React from "react";
 import { useParams } from "react-router-dom";
 
 import EndringsloggForm, { EndringsloggFormValues } from "../../components/endringslogg/EndringsloggForm";
-import { dateOrNull } from "../../components/FormDatePicker";
 import { useEditEndringslogg, useHentEndringslogg } from "../../hooks/useApiData";
 
 const createPayload = (formValues: EndringsloggFormValues) => {
@@ -18,16 +17,6 @@ const createPayload = (formValues: EndringsloggFormValues) => {
         tilhørerSkjermbilde: formValues.tilhørerSkjermbilde as EndringsloggTilhorerSkjermbilde,
         sammendrag: formValues.sammendrag?.trim(),
         erPåkrevd: formValues.erPåkrevd,
-        aktivFraTidspunkt: dateOrNull(formValues.aktivFraTidspunkt)?.toLocaleDateString("sv-SV", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-        }),
-        aktivTilTidspunkt: dateOrNull(formValues.aktivTilTidspunkt)?.toLocaleDateString("sv-SV", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-        }),
         endringstyper: formValues.endringer.map((endring) => endring.endringstype),
         endringer: formValues.endringer as OppdaterEndringsloggEndring[],
     };

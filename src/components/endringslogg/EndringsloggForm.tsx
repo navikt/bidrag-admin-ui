@@ -50,7 +50,6 @@ export type EndringsloggFormValues = {
     endringer: Endring[];
 };
 
-export const fallbackToNull = <T extends string>(value: T | ""): T | null => (value === "" ? null : value);
 const fallbackToEmptyString = <T extends string | EndringsloggTilhorerSkjermbilde>(
     value: T | null | undefined
 ): T | "" => value ?? "";
@@ -101,22 +100,48 @@ const EndringsBox = ({
 }) => {
     const quillRef = useRef(null);
     const modalRef = useRef<HTMLDialogElement>(null);
-    const { getValues, control, trigger, resetField } = useFormContext<EndringsloggFormValues>();
+    const { getValues, control, resetField, setError, clearErrors } = useFormContext<EndringsloggFormValues>();
 
     const onAdd = () => {
-        trigger(["endring.tittel", "endring.innhold"]).then((valid) => {
-            if (valid) {
-                const endring = getValues("endring");
-                endringerFieldArray.prepend(endring);
-                resetField("endring");
-                modalRef.current?.close();
-            }
-        });
+        const endring = getValues("endring");
+        let valid = true;
+
+        if (!endring.tittel) {
+            valid = false;
+            setError("endring.tittel", {
+                type: "required",
+                message: "Dette feltet er påkrevd",
+            });
+        } else {
+            clearErrors("endring.tittel");
+        }
+
+        if (!endring.innhold) {
+            valid = false;
+            setError("endring.innhold", {
+                type: "required",
+                message: "Dette feltet er påkrevd",
+            });
+        } else {
+            clearErrors("endring.innhold");
+        }
+
+        if (valid) {
+            endringerFieldArray.prepend(endring);
+            resetField("endring");
+            modalRef.current?.close();
+        }
     };
 
     return (
         <>
-            <Button variant="tertiary" size="small" className="w-max" onClick={() => modalRef.current?.showModal()}>
+            <Button
+                type="button"
+                variant="tertiary"
+                size="small"
+                className="w-max"
+                onClick={() => modalRef.current?.showModal()}
+            >
                 + Legg til endring
             </Button>
 
@@ -140,12 +165,6 @@ const EndringsBox = ({
                             <Controller
                                 name="endring.tittel"
                                 control={control}
-                                rules={{
-                                    required: {
-                                        value: true,
-                                        message: "Dette feltet er påkrevd",
-                                    },
-                                }}
                                 render={({ field, fieldState }) => (
                                     <TextField
                                         {...field}
@@ -159,12 +178,6 @@ const EndringsBox = ({
                             <Controller
                                 name="endring.endringstype"
                                 control={control}
-                                rules={{
-                                    required: {
-                                        value: true,
-                                        message: "Dette feltet er påkrevd",
-                                    },
-                                }}
                                 render={({ field, fieldState }) => (
                                     <Select
                                         {...field}
@@ -186,12 +199,6 @@ const EndringsBox = ({
                                 name="endring.innhold"
                                 defaultValue=""
                                 control={control}
-                                rules={{
-                                    required: {
-                                        value: true,
-                                        message: "Dette feltet er påkrevd",
-                                    },
-                                }}
                                 render={({ field, fieldState }) => (
                                     <CustomQuillEditor
                                         ref={quillRef}
