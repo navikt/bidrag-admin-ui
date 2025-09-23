@@ -58,6 +58,7 @@ class CustomClipboard extends Clipboard {
 }
 
 Quill.register("modules/clipboard", CustomClipboard, true);
+
 type EditorProps = {
     readOnly: boolean;
     defaultValue: string;
@@ -101,7 +102,7 @@ export const CustomQuillEditor = ({ readOnly, defaultValue, onTextChange, ref, r
                     ? false
                     : {
                           container: [
-                              ["bold", "italic", "underline", "image", { header: 3 }],
+                              ["bold", "italic", "underline", "image", "link", { header: 3 }],
                               // [{ 'color': "red" }, { 'background': "yellow" }]
                           ],
                       },

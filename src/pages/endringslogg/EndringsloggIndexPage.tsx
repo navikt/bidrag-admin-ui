@@ -1,12 +1,18 @@
 import { EndringsLoggDto, Endringstype } from "@api/BidragAdminApi";
-import { MagnifyingGlassIcon, PencilIcon } from "@navikt/aksel-icons";
+import { MagnifyingGlassIcon, PencilIcon, TrashIcon } from "@navikt/aksel-icons";
 import { BodyLong, Button, Heading, Modal, Pagination, Switch, Table, Tag, VStack } from "@navikt/ds-react";
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link as ReactRouterLink } from "react-router";
 
 import { EndringsloggTilhorerSkjermbildeToVisningsnavn } from "../../components/endringslogg/EndringsloggForm";
-import { useAktiverEndringslogg, useDeaktiverEndringslogg, useHentEndringslogger } from "../../hooks/useApiData";
+import { ConfirmationModal } from "../../components/modal/ConfirmationModal";
+import {
+    useAktiverEndringslogg,
+    useDeaktiverEndringslogg,
+    useHentEndringslogger,
+    useSlettEndringslogg,
+} from "../../hooks/useApiData";
 
 const format = (date: Date) => {
     const y = date.getFullYear();
@@ -88,6 +94,54 @@ const EndringsModal = ({
     );
 };
 
+const DeleteButton = ({ endringsloggId }: { endringsloggId: number }) => {
+    const ref = useRef<HTMLDialogElement>(null);
+    const queryClient = useQueryClient();
+    const slettEndringslogg = useSlettEndringslogg();
+    const onSuccess = () => {
+        queryClient.setQueryData<EndringsLoggDto[]>(
+            ["endringslogger"],
+            (currentData: EndringsLoggDto[]) => currentData?.filter((endring) => endring.id !== endringsloggId)
+        );
+        queryClient.removeQueries({ queryKey: ["endringslogg", endringsloggId] });
+    };
+
+    const onDelete = () => {
+        slettEndringslogg.mutate(endringsloggId, { onSuccess });
+    };
+
+    const onConfirm = () => {
+        ref.current?.close();
+        onDelete();
+    };
+
+    return (
+        <>
+            <Button
+                variant="tertiary"
+                size="small"
+                icon={<TrashIcon title="Slett" />}
+                onClick={() => ref.current?.showModal()}
+            />
+            <ConfirmationModal
+                ref={ref}
+                description="Ønsker du å slette endringslogg?"
+                heading={<Heading size="small">Ønsker du å slette?</Heading>}
+                footer={
+                    <>
+                        <Button type="button" onClick={onConfirm} size="small">
+                            Ja, slett
+                        </Button>
+                        <Button type="button" variant="secondary" size="small" onClick={() => ref.current?.close()}>
+                            Avbryt
+                        </Button>
+                    </>
+                }
+            />
+        </>
+    );
+};
+
 const AktiverSwitch = ({ endringsloggId, aktiv }: { endringsloggId: number; aktiv: boolean }) => {
     const queryClient = useQueryClient();
     const aktiver = useAktiverEndringslogg();
@@ -151,6 +205,7 @@ export const EndringsloggIndexPage = () => {
                             <Table.HeaderCell scope="col">Aktiver</Table.HeaderCell>
                             <Table.HeaderCell scope="col"></Table.HeaderCell>
                             <Table.HeaderCell scope="col"></Table.HeaderCell>
+                            <Table.HeaderCell scope="col"></Table.HeaderCell>
                         </Table.Row>
                     </Table.Header>
                     <Table.Body>
@@ -193,6 +248,9 @@ export const EndringsloggIndexPage = () => {
                                             to={`/admin/endringslogg/${endringslogg.id}`}
                                             icon={<PencilIcon title="Rediger" />}
                                         />
+                                    </Table.DataCell>
+                                    <Table.DataCell>
+                                        <DeleteButton endringsloggId={endringslogg.id} />
                                     </Table.DataCell>
                                 </Table.Row>
                             );

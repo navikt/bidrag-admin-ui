@@ -6,13 +6,14 @@ import {
     ErrorMessage,
     HStack,
     Label,
+    Modal,
     Select,
     Switch,
     Textarea,
     TextField,
     VStack,
 } from "@navikt/ds-react";
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import {
     Controller,
     FormProvider,
@@ -25,7 +26,6 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import { CustomQuillEditor } from "../customEditor/CustomQuillEditor";
-import { FormDatePicker } from "../FormDatePicker";
 
 type Endring = {
     innhold: string;
@@ -46,8 +46,6 @@ export type EndringsloggFormValues = {
     tilhørerSkjermbilde: "" | EndringsloggTilhorerSkjermbilde;
     sammendrag: string;
     erPåkrevd: boolean;
-    aktivFraTidspunkt: string;
-    aktivTilTidspunkt: string;
     endring: EndringForm;
     endringer: Endring[];
 };
@@ -64,8 +62,6 @@ const createDefaultValues = (endringslogg?: EndringsLoggDto): EndringsloggFormVa
         tilhørerSkjermbilde: fallbackToEmptyString(endringslogg?.gjelder),
         sammendrag: fallbackToEmptyString(endringslogg?.sammendrag),
         erPåkrevd: endringslogg?.erPåkrevd,
-        aktivFraTidspunkt: endringslogg?.aktivFra,
-        aktivTilTidspunkt: endringslogg?.aktivTil,
         endring: {
             tittel: "",
             innhold: "",
@@ -104,7 +100,7 @@ const EndringsBox = ({
     endringerFieldArray: UseFieldArrayReturn<EndringsloggFormValues, "endringer">;
 }) => {
     const quillRef = useRef(null);
-    const [openEndringForm, setOpenEndringForm] = useState<boolean>(false);
+    const modalRef = useRef<HTMLDialogElement>(null);
     const { getValues, control, trigger, resetField } = useFormContext<EndringsloggFormValues>();
 
     const onAdd = () => {
@@ -113,112 +109,109 @@ const EndringsBox = ({
                 const endring = getValues("endring");
                 endringerFieldArray.prepend(endring);
                 resetField("endring");
-                setOpenEndringForm(false);
+                modalRef.current?.close();
             }
         });
     };
 
     return (
         <>
-            {!openEndringForm && (
-                <Button variant="tertiary" size="small" className="w-max" onClick={() => setOpenEndringForm(true)}>
-                    + Legg til endring
-                </Button>
-            )}
-            {openEndringForm && (
-                <Box
-                    background="surface-default"
-                    padding="4"
-                    borderColor="border-default"
-                    borderWidth="1"
-                    borderRadius="medium"
-                >
-                    <VStack gap="4">
-                        <HStack gap="4" align="center" justify="space-between">
-                            <Label size="small">Endring</Label>
-                            <Button
-                                type="button"
-                                onClick={() => {
-                                    resetField("endring");
-                                    setOpenEndringForm(false);
+            <Button variant="tertiary" size="small" className="w-max" onClick={() => modalRef.current?.showModal()}>
+                + Legg til endring
+            </Button>
+
+            <Modal
+                ref={modalRef}
+                header={{ heading: "Endring" }}
+                closeOnBackdropClick
+                onClose={() => resetField("endring")}
+                aria-labelledby="modal-heading"
+                width={400}
+            >
+                <Modal.Body className="pb-0">
+                    <Box
+                        background="surface-default"
+                        padding="4"
+                        borderColor="border-default"
+                        borderWidth="1"
+                        borderRadius="medium"
+                    >
+                        <VStack gap="4">
+                            <Controller
+                                name="endring.tittel"
+                                control={control}
+                                rules={{
+                                    required: {
+                                        value: true,
+                                        message: "Dette feltet er påkrevd",
+                                    },
                                 }}
-                                icon={<TrashIcon aria-hidden />}
-                                variant="tertiary"
-                                size="small"
+                                render={({ field, fieldState }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Tittel"
+                                        size="small"
+                                        error={fieldState.error?.message}
+                                        className="h-max"
+                                    />
+                                )}
                             />
-                        </HStack>
+                            <Controller
+                                name="endring.endringstype"
+                                control={control}
+                                rules={{
+                                    required: {
+                                        value: true,
+                                        message: "Dette feltet er påkrevd",
+                                    },
+                                }}
+                                render={({ field, fieldState }) => (
+                                    <Select
+                                        {...field}
+                                        error={fieldState.error?.message}
+                                        label="Endringstype"
+                                        size="small"
+                                        className="h-max"
+                                    >
+                                        {Object.values(Endringstype).map((endringstype) => (
+                                            <option key={endringstype} value={endringstype}>
+                                                {EndringstypeToVisningsnavn[endringstype]}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                )}
+                            />
 
-                        <Controller
-                            name="endring.tittel"
-                            control={control}
-                            rules={{
-                                required: {
-                                    value: true,
-                                    message: "Dette feltet er påkrevd",
-                                },
-                            }}
-                            render={({ field, fieldState }) => (
-                                <TextField
-                                    {...field}
-                                    label="Tittel"
-                                    size="small"
-                                    error={fieldState.error?.message}
-                                    className="h-max"
-                                />
-                            )}
-                        />
-                        <Controller
-                            name="endring.endringstype"
-                            control={control}
-                            rules={{
-                                required: {
-                                    value: true,
-                                    message: "Dette feltet er påkrevd",
-                                },
-                            }}
-                            render={({ field, fieldState }) => (
-                                <Select
-                                    {...field}
-                                    error={fieldState.error?.message}
-                                    label="Endringstype"
-                                    size="small"
-                                    className="h-max"
-                                >
-                                    {Object.values(Endringstype).map((endringstype) => (
-                                        <option key={endringstype} value={endringstype}>
-                                            {EndringstypeToVisningsnavn[endringstype]}
-                                        </option>
-                                    ))}
-                                </Select>
-                            )}
-                        />
-
-                        <Controller
-                            name="endring.innhold"
-                            control={control}
-                            rules={{
-                                required: {
-                                    value: true,
-                                    message: "Dette feltet er påkrevd",
-                                },
-                            }}
-                            render={({ field, fieldState }) => (
-                                <CustomQuillEditor
-                                    ref={quillRef}
-                                    resize
-                                    onTextChange={(innhold) => field.onChange(innhold)}
-                                    readOnly={false}
-                                    error={fieldState.error?.message}
-                                    defaultValue=""
-                                />
-                            )}
-                        />
-                        <Button type="button" variant="tertiary" size="small" className="w-max" onClick={onAdd}>
-                            + Legg til endring
-                        </Button>
-                    </VStack>
-                </Box>
-            )}
+                            <Controller
+                                name="endring.innhold"
+                                defaultValue=""
+                                control={control}
+                                rules={{
+                                    required: {
+                                        value: true,
+                                        message: "Dette feltet er påkrevd",
+                                    },
+                                }}
+                                render={({ field, fieldState }) => (
+                                    <CustomQuillEditor
+                                        ref={quillRef}
+                                        resize
+                                        onTextChange={(innhold) => field.onChange(innhold)}
+                                        readOnly={false}
+                                        error={fieldState.error?.message}
+                                        defaultValue={field.value}
+                                    />
+                                )}
+                            />
+                        </VStack>
+                    </Box>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button type="button" variant="tertiary" size="small" className="w-max" onClick={onAdd}>
+                        + Legg til endring
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </>
     );
 };
@@ -486,42 +479,6 @@ export default function EndringsloggForm({
                                         </Select>
                                     )}
                                 />
-                            </div>
-                            <div>
-                                <HStack gap="4">
-                                    <Controller
-                                        name="aktivFraTidspunkt"
-                                        control={formMethods.control}
-                                        rules={{
-                                            required: {
-                                                value: true,
-                                                message: "Dette feltet er påkrevd",
-                                            },
-                                        }}
-                                        render={({ field, fieldState }) => (
-                                            <FormDatePicker
-                                                {...field}
-                                                defaultValue={field.value}
-                                                label="Aktiv fra"
-                                                error={fieldState.error?.message}
-                                                className="h-max"
-                                            />
-                                        )}
-                                    />
-                                    <Controller
-                                        name="aktivTilTidspunkt"
-                                        control={formMethods.control}
-                                        render={({ field, fieldState }) => (
-                                            <FormDatePicker
-                                                {...field}
-                                                defaultValue={field.value}
-                                                label="Aktiv til"
-                                                error={fieldState.error?.message}
-                                                className="h-max"
-                                            />
-                                        )}
-                                    />
-                                </HStack>
                             </div>
                         </div>
                         {controlledFields.length > 0 && (

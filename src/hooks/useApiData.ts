@@ -88,3 +88,18 @@ export const useDeaktiverEndringslogg = () => {
         },
     });
 };
+
+export const useSlettEndringslogg = () => {
+    const adminApi = useBidragAdminApi();
+
+    return useMutation({
+        mutationFn: async (endringsloggId: number): Promise<void> => {
+            await adminApi.endringslogg.slettEndringslogg(endringsloggId);
+        },
+        networkMode: "always",
+        onError: (error) => {
+            console.log("onError", error);
+            LoggerService.error("Feil ved sletting av endringslogg", error);
+        },
+    });
+};

@@ -64,3 +64,18 @@
     display: none;
     width: max-content;
 }
+.ql-snow .ql-tooltip[data-mode="link"]::before {
+    content: "Skriv inn URL:";
+}
+.ql-snow .ql-tooltip[data-mode="link"] a.ql-action::after {
+    content: "Lagre";
+}
+.ql-snow .ql-tooltip:not([data-mode="link"])::before {
+    content: "Lenke:";
+}
+.ql-snow .ql-tooltip:not([data-mode="link"]) a.ql-action::after {
+    content: "Endre";
+}
+.ql-snow .ql-tooltip a.ql-remove::before {
+    content: "Fjern lenke";
+}
