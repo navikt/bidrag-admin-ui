@@ -355,7 +355,7 @@ export default function EndringsloggForm({
 
     const validateEndringer = () => {
         const endringer = formMethods.getValues("endringer");
-        if (endringer.length < 1) {
+        if (endringer.length < 0) {
             formMethods.setError("root", {
                 type: "custom",
                 message: "Du må legge til minst en endring",

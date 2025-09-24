@@ -57,7 +57,7 @@ class CustomClipboard extends Clipboard {
     }
 }
 
-Quill.register("modules/clipboard", CustomClipboard, true);
+// Quill.register("modules/clipboard", CustomClipboard, true);
 
 type EditorProps = {
     readOnly: boolean;
@@ -107,11 +107,6 @@ export const CustomQuillEditor = ({ readOnly, defaultValue, onTextChange, ref, r
                           ],
                       },
                 clipboard: {
-                    allowed: {
-                        tags: ["strong", "h3", "h4", "em", "p", "br", "span", "u"],
-                        // attributes: ['href', 'rel', 'target', 'class', "style"]
-                        attributes: [],
-                    },
                     customButtons: [],
                     keepSelection: true,
                     substituteBlockElements: true,

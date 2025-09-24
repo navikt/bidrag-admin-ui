@@ -59,7 +59,7 @@ const EndringsModal = ({
             <>
                 <Modal.Body className="grid gap-4">
                     <Heading size="xsmall" className="flex gap-2">
-                        {selectedEndringslogg.endringer[pageState - 1].tittel}{" "}
+                        {selectedEndringslogg.endringer[pageState - 1].tittel}
                         <Tag
                             variant={
                                 EndringstypeToTagMapper[selectedEndringslogg.endringer[pageState - 1].endringstype].tag
@@ -211,52 +211,59 @@ export const EndringsloggIndexPage = () => {
                         </Table.Row>
                     </Table.Header>
                     <Table.Body>
-                        {endringslogger.data.map((endringslogg, i) => {
-                            return (
-                                <Table.Row key={i + endringslogg.tittel + endringslogg.dato}>
-                                    <Table.HeaderCell scope="row">{endringslogg.tittel}</Table.HeaderCell>
-                                    <Table.DataCell>
-                                        {EndringsloggTilhorerSkjermbildeToVisningsnavn[endringslogg.gjelder]}
-                                    </Table.DataCell>
-                                    <Table.DataCell>{format(new Date(endringslogg.dato))}</Table.DataCell>
-                                    <Table.DataCell>
-                                        {endringslogg.endringstyper.map((endringstype, i) => (
-                                            <Tag
-                                                key={i + endringstype}
-                                                variant={EndringstypeToTagMapper[endringstype].tag}
-                                                size="xsmall"
-                                                className="mr-2"
-                                            >
-                                                {EndringstypeToTagMapper[endringstype].tekst}
-                                            </Tag>
-                                        ))}
-                                    </Table.DataCell>
-                                    <Table.DataCell>
-                                        <AktiverSwitch endringsloggId={endringslogg.id} aktiv={endringslogg.aktiv} />
-                                    </Table.DataCell>
-                                    <Table.DataCell>
-                                        <Button
-                                            variant="tertiary"
-                                            size="small"
-                                            icon={<MagnifyingGlassIcon title="Forhåndsvisning" />}
-                                            onClick={() => setPreviewed(endringslogg)}
-                                        />
-                                    </Table.DataCell>
-                                    <Table.DataCell>
-                                        <Button
-                                            variant="tertiary"
-                                            size="small"
-                                            as={ReactRouterLink}
-                                            to={`/admin/endringslogg/${endringslogg.id}`}
-                                            icon={<PencilIcon title="Rediger" />}
-                                        />
-                                    </Table.DataCell>
-                                    <Table.DataCell>
-                                        <DeleteButton endringsloggId={endringslogg.id} />
-                                    </Table.DataCell>
-                                </Table.Row>
-                            );
-                        })}
+                        {endringslogger.data
+                            .sort((a, b) => (a.opprettetTidspunkt < b.opprettetTidspunkt ? 1 : -1))
+                            .map((endringslogg, i) => {
+                                return (
+                                    <Table.Row key={i + endringslogg.tittel + endringslogg.dato}>
+                                        <Table.HeaderCell scope="row">{endringslogg.tittel}</Table.HeaderCell>
+                                        <Table.DataCell>
+                                            {EndringsloggTilhorerSkjermbildeToVisningsnavn[endringslogg.gjelder]}
+                                        </Table.DataCell>
+                                        <Table.DataCell>{format(new Date(endringslogg.dato))}</Table.DataCell>
+                                        <Table.DataCell>
+                                            {endringslogg.endringstyper.map((endringstype, i) => (
+                                                <Tag
+                                                    key={i + endringstype}
+                                                    variant={EndringstypeToTagMapper[endringstype].tag}
+                                                    size="xsmall"
+                                                    className="mr-2"
+                                                >
+                                                    {EndringstypeToTagMapper[endringstype].tekst}
+                                                </Tag>
+                                            ))}
+                                        </Table.DataCell>
+                                        <Table.DataCell>
+                                            <AktiverSwitch
+                                                endringsloggId={endringslogg.id}
+                                                aktiv={endringslogg.aktiv}
+                                            />
+                                        </Table.DataCell>
+                                        <Table.DataCell>
+                                            {endringslogg.endringer.length > 0 && (
+                                                <Button
+                                                    variant="tertiary"
+                                                    size="small"
+                                                    icon={<MagnifyingGlassIcon title="Forhåndsvisning" />}
+                                                    onClick={() => setPreviewed(endringslogg)}
+                                                />
+                                            )}
+                                        </Table.DataCell>
+                                        <Table.DataCell>
+                                            <Button
+                                                variant="tertiary"
+                                                size="small"
+                                                as={ReactRouterLink}
+                                                to={`/admin/endringslogg/${endringslogg.id}`}
+                                                icon={<PencilIcon title="Rediger" />}
+                                            />
+                                        </Table.DataCell>
+                                        <Table.DataCell>
+                                            <DeleteButton endringsloggId={endringslogg.id} />
+                                        </Table.DataCell>
+                                    </Table.Row>
+                                );
+                            })}
                     </Table.Body>
                 </Table>
             </VStack>
