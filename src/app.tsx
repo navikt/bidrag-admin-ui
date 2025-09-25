@@ -4,11 +4,15 @@ import { QueryClient, QueryClientProvider, useQueryErrorResetBoundary } from "@t
 import { PersistedClient, Persister, PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { FlagProvider, IConfig } from "@unleash/proxy-client-react";
 import { del, get, set } from "idb-keyval";
-import React, { Suspense } from "react";
+import React, { PropsWithChildren, Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import DokumentasjonPage from "./pages/DokumentasjonPage";
+import { EndringsloggCreatePage } from "./pages/endringslogg/EndringsloggCreatePage";
+import { EndringsloggEditPage } from "./pages/endringslogg/EndringsloggEditPage";
+import { EndringsloggIndexPage } from "./pages/endringslogg/EndringsloggIndexPage";
+import { EndringsloggLayout } from "./pages/endringslogg/EndringsloggLayout";
 import PageWrapper from "./pages/PageWrapper";
 import VedtakExplorer from "./pages/visualise/VedtakExplorer";
 
@@ -77,10 +81,45 @@ export default function App() {
                 <BrowserRouter>
                     <Routes>
                         <Route path="/admin/vedtak/explorer">
-                            <Route index element={<VedtakExplorerWrapper />} />
+                            <Route
+                                index
+                                element={
+                                    <QuerySuspenseWrapper>
+                                        <VedtakExplorer />
+                                    </QuerySuspenseWrapper>
+                                }
+                            />
                         </Route>
                         <Route path="/admin/dokumentasjon">
                             <Route index element={<DokumentasjonWrapper />} />
+                        </Route>
+                        <Route path="/admin/endringslogg">
+                            <Route element={<EndringsloggLayout />}>
+                                <Route
+                                    index
+                                    element={
+                                        <QuerySuspenseWrapper>
+                                            <EndringsloggIndexPage />
+                                        </QuerySuspenseWrapper>
+                                    }
+                                />
+                                <Route
+                                    path=":id"
+                                    element={
+                                        <QuerySuspenseWrapper>
+                                            <EndringsloggEditPage />
+                                        </QuerySuspenseWrapper>
+                                    }
+                                />
+                                <Route
+                                    path="ny"
+                                    element={
+                                        <QuerySuspenseWrapper>
+                                            <EndringsloggCreatePage />
+                                        </QuerySuspenseWrapper>
+                                    }
+                                />
+                            </Route>
                         </Route>
                     </Routes>
                 </BrowserRouter>
@@ -110,7 +149,7 @@ const DokumentasjonWrapper = () => {
     );
 };
 
-const VedtakExplorerWrapper = () => {
+const QuerySuspenseWrapper = ({ children }: PropsWithChildren) => {
     return (
         <QueryClientProvider client={queryClient}>
             <Suspense
@@ -120,7 +159,7 @@ const VedtakExplorerWrapper = () => {
                     </div>
                 }
             >
-                <VedtakExplorer />
+                {children}
             </Suspense>
         </QueryClientProvider>
     );

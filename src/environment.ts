@@ -7,6 +7,7 @@ const system = {
 };
 
 const url = {
+    bidragAdmin: process.env.BIDRAG_ADMIN_URL,
     bidragBehandling: process.env.BIDRAG_BEHANDLING_URL,
     bidragVedtak: process.env.BIDRAG_VEDTAK_URL,
 };
