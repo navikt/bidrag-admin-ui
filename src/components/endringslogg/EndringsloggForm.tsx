@@ -1,5 +1,12 @@
 import { EndringsLoggDto, EndringsloggTilhorerSkjermbilde, Endringstype } from "@api/BidragAdminApi";
-import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon, MagnifyingGlassIcon, TrashIcon } from "@navikt/aksel-icons";
+import {
+    CheckmarkCircleIcon,
+    ChevronDownIcon,
+    ChevronLeftIcon,
+    ChevronUpIcon,
+    MagnifyingGlassIcon,
+    TrashIcon,
+} from "@navikt/aksel-icons";
 import {
     Box,
     Button,
@@ -13,7 +20,8 @@ import {
     TextField,
     VStack,
 } from "@navikt/ds-react";
-import React, { useRef, useState } from "react";
+import { useMutationState } from "@tanstack/react-query";
+import React, { useEffect, useRef, useState } from "react";
 import {
     Controller,
     FormProvider,
@@ -352,12 +360,17 @@ export default function EndringsloggForm({
     endringslogg,
     mutationError,
 }: {
-    onSave: (formValues: EndringsloggFormValues, onSuccess: () => void) => void;
+    onSave: (formValues: EndringsloggFormValues, onSuccess: (id: number) => void) => void;
     endringslogg?: EndringsLoggDto;
     mutationError: Error;
 }) {
     const [previewed, setPreviewed] = useState<EndringsLoggDto | null>(null);
-
+    const variables = useMutationState({
+        filters: { mutationKey: ["createUpdateEndringslogg"], status: "pending" },
+        select: (mutation) => mutation.state.variables,
+    });
+    const [showSaved, setShowSaved] = useState(false);
+    const wasPendingRef = useRef(false);
     const navigate = useNavigate();
     const defaultValues = createDefaultValues(endringslogg);
     const formMethods = useForm<EndringsloggFormValues>({
@@ -377,6 +390,14 @@ export default function EndringsloggForm({
         };
     });
 
+    useEffect(() => {
+        const isPending = variables.length > 0;
+        if (!isPending && wasPendingRef.current) {
+            setShowSaved(true);
+            setTimeout(() => setShowSaved(false), 1000);
+        }
+        wasPendingRef.current = isPending;
+    }, [variables.length]);
     const validateEndringer = () => {
         const endringer = formMethods.getValues("endringer");
         if (endringer.length < 0) {
@@ -398,7 +419,10 @@ export default function EndringsloggForm({
             return;
         }
 
-        onSave(formValues, () => {});
+        onSave(formValues, (id) => {
+            console.log(formValues, id);
+            formMethods.setValue("id", id);
+        });
     };
 
     const onError = () => {
@@ -522,8 +546,14 @@ export default function EndringsloggForm({
                         )}
 
                         <HStack gap={"2"}>
-                            <Button type="submit" variant="primary" size="small">
-                                Lagre
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                icon={showSaved ? <CheckmarkCircleIcon /> : undefined}
+                                size="small"
+                                loading={variables.length > 0}
+                            >
+                                {showSaved ? "Lagret" : "Lagre"}
                             </Button>
                             {endringslogg && endringslogg.endringer.length > 0 && (
                                 <Button

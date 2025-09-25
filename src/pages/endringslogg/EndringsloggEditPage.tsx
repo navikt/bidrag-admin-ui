@@ -30,24 +30,30 @@ export const EndringsloggEditPage = () => {
     }>();
     const queryClient = useQueryClient();
     const endringslogg = useHentEndringslogg(Number(id));
-    const mutation = useEditEndringslogg(Number(id));
+    const mutation = useEditEndringslogg();
 
-    const onSave = (formValues: EndringsloggFormValues, onSuccess: () => void) => {
+    const onSave = (formValues: EndringsloggFormValues, onSuccess: (id: number) => void) => {
         const payload = createPayload(formValues);
-        mutation.mutate(payload, {
-            onSuccess: (response) => {
-                queryClient.setQueryData<EndringsLoggDto[]>(["endringslogger"], (currentData: EndringsLoggDto[]) => {
-                    return currentData?.map((endring) => {
-                        if (endring.id === response.id) {
-                            return response;
+        mutation.mutate(
+            { endringsloggId: Number(id), payload },
+            {
+                onSuccess: (response) => {
+                    queryClient.setQueryData<EndringsLoggDto[]>(
+                        ["endringslogger"],
+                        (currentData: EndringsLoggDto[]) => {
+                            return currentData?.map((endring) => {
+                                if (endring.id === response.id) {
+                                    return response;
+                                }
+                                return endring;
+                            });
                         }
-                        return endring;
-                    });
-                });
-                queryClient.setQueryData<EndringsLoggDto>(["endringslogg", Number(id)], () => response);
-                onSuccess();
-            },
-        });
+                    );
+                    queryClient.setQueryData<EndringsLoggDto>(["endringslogg", Number(id)], () => response);
+                    onSuccess(response.id);
+                },
+            }
+        );
     };
     return <EndringsloggForm onSave={onSave} mutationError={mutation.error} endringslogg={endringslogg.data} />;
 };
