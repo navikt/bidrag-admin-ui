@@ -18,6 +18,7 @@ export const useCreateEndringslogg = () => {
     const adminApi = useBidragAdminApi();
 
     return useMutation({
+        mutationKey: ["createUpdateEndringslogg"],
         mutationFn: async (payload: OpprettEndringsloggRequest): Promise<EndringsLoggDto> => {
             const { data } = await adminApi.endringslogg.opprettEndringslogg(payload);
             return data;
@@ -30,11 +31,18 @@ export const useCreateEndringslogg = () => {
     });
 };
 
-export const useEditEndringslogg = (endringsloggId: number) => {
+export const useEditEndringslogg = () => {
     const adminApi = useBidragAdminApi();
 
     return useMutation({
-        mutationFn: async (payload: OppdaterEndringsloggRequest): Promise<EndringsLoggDto> => {
+        mutationKey: ["createUpdateEndringslogg"],
+        mutationFn: async ({
+            endringsloggId,
+            payload,
+        }: {
+            endringsloggId: number;
+            payload: OppdaterEndringsloggRequest;
+        }): Promise<EndringsLoggDto> => {
             const { data } = await adminApi.endringslogg.oppdaterEndringslogg(endringsloggId, payload);
             return data;
         },
@@ -46,11 +54,12 @@ export const useEditEndringslogg = (endringsloggId: number) => {
     });
 };
 
-export const useHentEndringslogg = (endringsloggId: number) => {
+export const useHentEndringslogg = (endringsloggId?: number) => {
     const adminApi = useBidragAdminApi();
     return useSuspenseQuery({
         queryKey: ["endringslogg", endringsloggId],
         queryFn: async (): Promise<EndringsLoggDto> => {
+            if (!endringsloggId) return {} as EndringsLoggDto;
             const { data } = await adminApi.endringslogg.hentEndringslogg(endringsloggId);
             return data;
         },
