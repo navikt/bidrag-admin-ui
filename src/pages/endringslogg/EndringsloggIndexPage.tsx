@@ -55,6 +55,7 @@ export const EndringsModal = ({
             onClose={() => onClose()}
             header={{ heading: selectedEndringslogg.tittel }}
             closeOnBackdropClick={closeOnBackdropClick}
+            className="max-w-[1500px]"
         >
             <>
                 <Modal.Body className="grid gap-4">
@@ -72,7 +73,12 @@ export const EndringsModal = ({
 
                     <BodyLong as="div" size="small">
                         <div
-                            style={{ overflowWrap: "break-word", width: "38rem", height: "40rem" }}
+                            style={{
+                                overflowWrap: "break-word",
+                                maxWidth: "70rem",
+                                minWidth: "38rem",
+                                maxHeight: "40rem",
+                            }}
                             dangerouslySetInnerHTML={{ __html: selectedEndringslogg.endringer[pageState - 1].innhold }}
                         />
                     </BodyLong>
