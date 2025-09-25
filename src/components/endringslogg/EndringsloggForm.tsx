@@ -81,10 +81,11 @@ export const EndringsloggTilhorerSkjermbildeToVisningsnavn = {
     [EndringsloggTilhorerSkjermbilde.BEHANDLING_BIDRAG]: "Bidrag",
     [EndringsloggTilhorerSkjermbilde.BEHANDLING_FORSKUDD]: "Forskudd",
     [EndringsloggTilhorerSkjermbilde.BEHANDLINGSAeRBIDRAG]: "Særbidrag",
-    [EndringsloggTilhorerSkjermbilde.BEHANDLING_ALLE]: "Alle",
+    [EndringsloggTilhorerSkjermbilde.BEHANDLING_ALLE]: "Behandling (alle)",
     [EndringsloggTilhorerSkjermbilde.FORSENDELSE]: "Forsendelse",
     [EndringsloggTilhorerSkjermbilde.INNSYN_DOKUMENT]: "Innsyn dokument",
     [EndringsloggTilhorerSkjermbilde.SAMHANDLER]: "Samhandler",
+    [EndringsloggTilhorerSkjermbilde.ALLE]: "Alle",
 };
 
 export const EndringstypeToVisningsnavn = {

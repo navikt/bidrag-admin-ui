@@ -17,6 +17,7 @@ export enum EndringsloggTilhorerSkjermbilde {
     FORSENDELSE = "FORSENDELSE",
     INNSYN_DOKUMENT = "INNSYN_DOKUMENT",
     SAMHANDLER = "SAMHANDLER",
+    ALLE = "ALLE",
 }
 
 export enum Endringstype {
