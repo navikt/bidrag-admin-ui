@@ -398,9 +398,7 @@ export default function EndringsloggForm({
             return;
         }
 
-        onSave(formValues, () => {
-            formMethods.reset();
-        });
+        onSave(formValues, () => {});
     };
 
     const onError = () => {
