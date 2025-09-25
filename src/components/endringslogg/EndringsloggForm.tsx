@@ -142,7 +142,9 @@ const EndringsBox = ({
                 variant="tertiary"
                 size="small"
                 className="w-max"
-                onClick={() => modalRef.current?.showModal()}
+                onClick={() => {
+                    endringerFieldArray.prepend({ tittel: "", innhold: "", endringstype: Endringstype.ENDRING });
+                }}
             >
                 + Legg til endring
             </Button>
@@ -525,7 +527,7 @@ export default function EndringsloggForm({
                             <Button type="submit" variant="primary" size="small">
                                 Lagre
                             </Button>
-                            {endringslogg.endringer.length > 0 && (
+                            {endringslogg && endringslogg.endringer.length > 0 && (
                                 <Button
                                     variant="tertiary"
                                     size="small"
