@@ -1,5 +1,5 @@
 import { EndringsLoggDto, EndringsloggTilhorerSkjermbilde, Endringstype } from "@api/BidragAdminApi";
-import { ChevronLeftIcon, TrashIcon } from "@navikt/aksel-icons";
+import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon, TrashIcon } from "@navikt/aksel-icons";
 import {
     Box,
     Button,
@@ -246,13 +246,31 @@ const EndringsFormBox = ({
                 <VStack gap="4">
                     <HStack gap="4" align="center" justify="space-between">
                         <Label size="small">Endring</Label>
-                        <Button
-                            type="button"
-                            onClick={() => endringerFieldArray.remove(index)}
-                            icon={<TrashIcon aria-hidden />}
-                            variant="tertiary"
-                            size="small"
-                        />
+                        <HStack gap="2">
+                            <Button
+                                type="button"
+                                onClick={() => endringerFieldArray.move(index, index - 1)}
+                                disabled={index === 0}
+                                icon={<ChevronUpIcon aria-hidden />}
+                                variant="tertiary"
+                                size="small"
+                            />
+                            <Button
+                                type="button"
+                                onClick={() => endringerFieldArray.move(index, index + 1)}
+                                disabled={index === endringerFieldArray.fields.length - 1}
+                                icon={<ChevronDownIcon aria-hidden />}
+                                variant="tertiary"
+                                size="small"
+                            />
+                            <Button
+                                type="button"
+                                onClick={() => endringerFieldArray.remove(index)}
+                                icon={<TrashIcon aria-hidden />}
+                                variant="tertiary"
+                                size="small"
+                            />
+                        </HStack>
                     </HStack>
 
                     <Controller
@@ -377,7 +395,6 @@ export default function EndringsloggForm({
 
         onSave(formValues, () => {
             formMethods.reset();
-            navigate("/admin/endringslogg");
         });
     };
 
@@ -490,7 +507,7 @@ export default function EndringsloggForm({
                             </div>
                         </div>
                         {controlledFields.length > 0 && (
-                            <div className="grid gap-4 grid-cols-3">
+                            <div className="grid gap-4 grid-cols-1">
                                 {controlledFields.map((item, index) => (
                                     <EndringsFormBox
                                         key={`${item.id} + ${index}`}
