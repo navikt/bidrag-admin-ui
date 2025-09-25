@@ -5,8 +5,8 @@ import "quill-paste-smart";
 
 import { ErrorMessage } from "@navikt/ds-react";
 import Quill from "quill";
+import QuillResize from "quill-resize-module";
 import { useEffect, useRef, useState } from "react";
-
 const Clipboard = Quill.import("modules/clipboard");
 
 //@ts-ignore
@@ -58,6 +58,7 @@ class CustomClipboard extends Clipboard {
 }
 
 // Quill.register("modules/clipboard", CustomClipboard, true);
+Quill.register("modules/resize", QuillResize);
 
 type EditorProps = {
     readOnly: boolean;
@@ -96,6 +97,7 @@ export const CustomQuillEditor = ({ readOnly, defaultValue, onTextChange, ref, r
             theme: "snow",
             readOnly,
             modules: {
+                resize: {},
                 history: {},
 
                 toolbar: readOnly

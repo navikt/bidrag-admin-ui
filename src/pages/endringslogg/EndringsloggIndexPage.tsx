@@ -212,7 +212,7 @@ export const EndringsloggIndexPage = () => {
                     </Table.Header>
                     <Table.Body>
                         {endringslogger.data
-                            .sort((a, b) => (a.opprettetTidspunkt < b.opprettetTidspunkt ? 1 : -1))
+                            .sort((a, b) => (a.opprettetTidspunkt.localeCompare(b.opprettetTidspunkt) > 0 ? -1 : 1))
                             .map((endringslogg, i) => {
                                 return (
                                     <Table.Row key={i + endringslogg.tittel + endringslogg.dato}>
