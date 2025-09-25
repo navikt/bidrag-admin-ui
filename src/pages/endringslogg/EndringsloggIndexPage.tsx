@@ -36,7 +36,7 @@ export const EndringstypeToTagMapper = {
     },
 };
 
-const EndringsModal = ({
+export const EndringsModal = ({
     open,
     onClose,
     selectedEndringslogg,

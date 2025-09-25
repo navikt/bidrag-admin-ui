@@ -1,5 +1,5 @@
 import { EndringsLoggDto, EndringsloggTilhorerSkjermbilde, Endringstype } from "@api/BidragAdminApi";
-import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon, TrashIcon } from "@navikt/aksel-icons";
+import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon, MagnifyingGlassIcon, TrashIcon } from "@navikt/aksel-icons";
 import {
     Box,
     Button,
@@ -13,7 +13,7 @@ import {
     TextField,
     VStack,
 } from "@navikt/ds-react";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
     Controller,
     FormProvider,
@@ -25,6 +25,7 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
+import { EndringsModal } from "../../pages/endringslogg/EndringsloggIndexPage";
 import { CustomQuillEditor } from "../customEditor/CustomQuillEditor";
 
 type Endring = {
@@ -353,6 +354,8 @@ export default function EndringsloggForm({
     endringslogg?: EndringsLoggDto;
     mutationError: Error;
 }) {
+    const [previewed, setPreviewed] = useState<EndringsLoggDto | null>(null);
+
     const navigate = useNavigate();
     const defaultValues = createDefaultValues(endringslogg);
     const formMethods = useForm<EndringsloggFormValues>({
@@ -518,13 +521,33 @@ export default function EndringsloggForm({
                             </div>
                         )}
 
-                        <Button type="submit" variant="primary" size="small" className="w-max">
-                            Lagre
-                        </Button>
+                        <HStack gap={"2"}>
+                            <Button type="submit" variant="primary" size="small">
+                                Lagre
+                            </Button>
+                            {endringslogg.endringer.length > 0 && (
+                                <Button
+                                    variant="tertiary"
+                                    size="small"
+                                    icon={<MagnifyingGlassIcon title="Forhåndsvisning" />}
+                                    onClick={() => setPreviewed(endringslogg)}
+                                >
+                                    Forhåndsvisning
+                                </Button>
+                            )}
+                        </HStack>
                         {mutationError && (
                             <ErrorMessage size="small" showIcon>
                                 Feil ved lagring. Prøv på nytt.
                             </ErrorMessage>
+                        )}
+                        {previewed && (
+                            <EndringsModal
+                                open={!!previewed}
+                                onClose={() => setPreviewed(null)}
+                                selectedEndringslogg={previewed}
+                                closeOnBackdropClick
+                            />
                         )}
                     </div>
                 </form>
