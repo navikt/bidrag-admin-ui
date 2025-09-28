@@ -87,14 +87,14 @@ const createDefaultValues = (endringslogg?: EndringsLoggDto): EndringsloggFormVa
 };
 
 export const EndringsloggTilhorerSkjermbildeToVisningsnavn = {
+    [EndringsloggTilhorerSkjermbilde.ALLE]: "Alle (vises i alle skjermbilder)",
+    [EndringsloggTilhorerSkjermbilde.BEHANDLING_ALLE]: "Behandling (alle)",
     [EndringsloggTilhorerSkjermbilde.BEHANDLING_BIDRAG]: "Bidrag",
     [EndringsloggTilhorerSkjermbilde.BEHANDLING_FORSKUDD]: "Forskudd",
     [EndringsloggTilhorerSkjermbilde.BEHANDLINGSAeRBIDRAG]: "Særbidrag",
-    [EndringsloggTilhorerSkjermbilde.BEHANDLING_ALLE]: "Behandling (alle)",
     [EndringsloggTilhorerSkjermbilde.FORSENDELSE]: "Forsendelse",
     [EndringsloggTilhorerSkjermbilde.INNSYN_DOKUMENT]: "Innsyn dokument",
     [EndringsloggTilhorerSkjermbilde.SAMHANDLER]: "Samhandler",
-    [EndringsloggTilhorerSkjermbilde.ALLE]: "Alle",
 };
 
 export const EndringstypeToVisningsnavn = {
@@ -370,6 +370,8 @@ export default function EndringsloggForm({
         select: (mutation) => mutation.state.variables,
     });
     const [showSaved, setShowSaved] = useState(false);
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [saveAndLeave, setSaveAndLeave] = useState(false);
     const wasPendingRef = useRef(false);
     const navigate = useNavigate();
     const defaultValues = createDefaultValues(endringslogg);
@@ -398,6 +400,32 @@ export default function EndringsloggForm({
         }
         wasPendingRef.current = isPending;
     }, [variables.length]);
+
+    // Keyboard shortcut for save (Ctrl+S)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+                e.preventDefault();
+                formMethods.handleSubmit(onSubmit, onError)();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [formMethods]);
+
+    // Warn on unsaved changes when leaving the page
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (formMethods.formState.isDirty) {
+                e.preventDefault();
+                e.returnValue = "";
+            }
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [formMethods.formState.isDirty]);
     const validateEndringer = () => {
         const endringer = formMethods.getValues("endringer");
         if (endringer.length < 0) {
@@ -420,8 +448,12 @@ export default function EndringsloggForm({
         }
 
         onSave(formValues, (id) => {
-            console.log(formValues, id);
-            formMethods.setValue("id", id);
+            const updatedValues = { ...formValues, id };
+            formMethods.reset(updatedValues);
+            if (saveAndLeave) {
+                setSaveAndLeave(false);
+                navigate("/admin/endringslogg");
+            }
         });
     };
 
@@ -435,7 +467,13 @@ export default function EndringsloggForm({
                 variant="secondary"
                 type="button"
                 size="small"
-                onClick={() => navigate("/admin/endringslogg")}
+                onClick={() => {
+                    if (formMethods.formState.isDirty && formMethods.getValues("id") != null) {
+                        setShowLeaveModal(true);
+                    } else {
+                        navigate("/admin/endringslogg");
+                    }
+                }}
                 icon={<ChevronLeftIcon title="Tilbake" fontSize="1.5rem" />}
                 className="mb-4"
             >
@@ -479,6 +517,7 @@ export default function EndringsloggForm({
                                             {...field}
                                             label="Sammendrag"
                                             size="small"
+                                            description="Tekst som vises når bruker trykker på bjelleknappen øverst til høyre"
                                             error={fieldState.error?.message}
                                             minRows={5}
                                         />
@@ -492,6 +531,7 @@ export default function EndringsloggForm({
                                             checked={field.value}
                                             onChange={(e) => field.onChange(e.target.checked)}
                                             size="small"
+                                            description="Saksbehandlere vil se endringene som en popup når de logger seg inn på bisys (ny skjermbildene)"
                                         >
                                             Er påkrevd
                                         </Switch>
@@ -517,17 +557,19 @@ export default function EndringsloggForm({
                                     render={({ field, fieldState }) => (
                                         <Select
                                             {...field}
-                                            label="Gjelder"
+                                            label="Gjelder skjermbilde"
                                             size="small"
                                             error={fieldState.error?.message}
                                             className="h-max"
                                         >
-                                            <option value="">- Velg type skjermbilde -</option>
-                                            {Object.values(EndringsloggTilhorerSkjermbilde).map((gjelder) => (
-                                                <option key={gjelder} value={gjelder}>
-                                                    {EndringsloggTilhorerSkjermbildeToVisningsnavn[gjelder]}
-                                                </option>
-                                            ))}
+                                            <option value="">- Velg hvilken skjermbilde endringen gjelder -</option>
+                                            {Object.keys(EndringsloggTilhorerSkjermbildeToVisningsnavn).map(
+                                                (gjelder) => (
+                                                    <option key={gjelder} value={gjelder}>
+                                                        {EndringsloggTilhorerSkjermbildeToVisningsnavn[gjelder]}
+                                                    </option>
+                                                )
+                                            )}
                                         </Select>
                                     )}
                                 />
@@ -560,7 +602,7 @@ export default function EndringsloggForm({
                                     variant="tertiary"
                                     size="small"
                                     icon={<MagnifyingGlassIcon title="Forhåndsvisning" />}
-                                    onClick={() => setPreviewed(endringslogg)}
+                                    onClick={() => setPreviewed(formMethods.getValues() as EndringsLoggDto)}
                                 >
                                     Forhåndsvisning
                                 </Button>
@@ -579,6 +621,43 @@ export default function EndringsloggForm({
                                 closeOnBackdropClick
                             />
                         )}
+                        <Modal
+                            open={showLeaveModal}
+                            onClose={() => setShowLeaveModal(false)}
+                            header={{ heading: "Ulagrede endringer" }}
+                            closeOnBackdropClick={false}
+                        >
+                            <Modal.Body>
+                                <p>Du har ulagrede endringer. Vil du forlate siden uten å lagre?</p>
+                                <p>Du kan lagre endringene med Ctrl+S (eller Cmd+S på Mac).</p>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button variant="secondary" size="small" onClick={() => setShowLeaveModal(false)}>
+                                    Avbryt
+                                </Button>
+                                <Button
+                                    variant="tertiary"
+                                    size="small"
+                                    onClick={() => {
+                                        setShowLeaveModal(false);
+                                        setSaveAndLeave(true);
+                                        formMethods.handleSubmit(onSubmit, onError)();
+                                    }}
+                                >
+                                    Lagre og forlat
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    size="small"
+                                    onClick={() => {
+                                        setShowLeaveModal(false);
+                                        navigate("/admin/endringslogg");
+                                    }}
+                                >
+                                    Forlat uten å lagre
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
                     </div>
                 </form>
             </FormProvider>

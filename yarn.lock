@@ -8044,6 +8044,11 @@ quill-delta@^5.1.0:
     lodash.clonedeep "^4.5.0"
     lodash.isequal "^4.5.0"
 
+quill-image@^0.0.21:
+  version "0.0.21"
+  resolved "https://registry.yarnpkg.com/quill-image/-/quill-image-0.0.21.tgz#4cd803b01598b197d83a680b280c6718218613e8"
+  integrity sha512-xeAdIlcYntI73Z6AZfPAlAZjgH3JdfrTIUKaRXY4ddNsUUbFlLpNI+YxGzPMU4hkcEEpjBIqi8QbEzBYwLcPNw==
+
 quill-paste-smart@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/quill-paste-smart/-/quill-paste-smart-2.0.0.tgz#c0c91211145dd611a37a42ab97387d37da3ab6c0"

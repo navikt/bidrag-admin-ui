@@ -52,6 +52,7 @@
     "octokit": "^4.1.0",
     "prettier": "3.0.1",
     "quill": "^2.0.3",
+    "quill-image": "^0.0.21",
     "quill-paste-smart": "^2.0.0",
     "quill-resize-module": "2.0.8",
     "react": "^19.0.0",

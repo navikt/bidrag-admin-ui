@@ -100,14 +100,13 @@ export const CustomQuillEditor = ({ readOnly, defaultValue, onTextChange, ref, r
                 resize: {},
                 history: {},
 
-                toolbar: readOnly
-                    ? false
-                    : {
-                          container: [
-                              ["bold", "italic", "underline", "image", "link", { header: 3 }],
-                              // [{ 'color': "red" }, { 'background': "yellow" }]
-                          ],
-                      },
+                toolbar: {
+                    container: [
+                        [{ color: [] }, { background: [] }],
+                        ["bold", "italic", "underline", "image", "link", { header: 3 }],
+                        // [{ 'color': "red" }, { 'background': "yellow" }]
+                    ],
+                },
                 clipboard: {
                     customButtons: [],
                     keepSelection: true,
