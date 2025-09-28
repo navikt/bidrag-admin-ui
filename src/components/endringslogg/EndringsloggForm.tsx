@@ -517,6 +517,7 @@ export default function EndringsloggForm({
                                             {...field}
                                             label="Sammendrag"
                                             size="small"
+                                            description="Tekst som vises når bruker trykker på bjelleknappen øverst til høyre"
                                             error={fieldState.error?.message}
                                             minRows={5}
                                         />
@@ -530,7 +531,7 @@ export default function EndringsloggForm({
                                             checked={field.value}
                                             onChange={(e) => field.onChange(e.target.checked)}
                                             size="small"
-                                            description="Viser endringene neste gang saksbehandler åpner skjermbildet når endringen er aktivert"
+                                            description="Saksbehandlere vil se endringene som en popup når de logger seg inn på bisys (ny skjermbildene)"
                                         >
                                             Er påkrevd
                                         </Switch>
