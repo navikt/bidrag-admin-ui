@@ -89,7 +89,7 @@ function referanseTilTree(referanse?: string, grunnlagsliste?: GrunnlagDto[], pa
     const grunnlag = filtrertGrunnlagsliste[0];
     const children = [
         ...grunnlag.grunnlagsreferanseListe.map((ref) => referanseTilTree(ref, grunnlagsliste)),
-        referanseTilTree(grunnlag.gjelderReferanse, grunnlagsliste),
+        // referanseTilTree(grunnlag.gjelderReferanse, grunnlagsliste),
         referanseTilTree(grunnlag.gjelderBarnReferanse, grunnlagsliste),
     ].filter((item) => item !== null);
 
