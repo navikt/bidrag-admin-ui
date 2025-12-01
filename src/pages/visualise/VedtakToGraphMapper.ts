@@ -270,6 +270,7 @@ export function engangsbeløpToTreeDto(engangsbeløp: EngangsbelopDto): TreeEnga
         type: engangsbeløp.type,
         sak: engangsbeløp.sak,
         beløp: engangsbeløp.beløp,
+        referanse: engangsbeløp.referanse,
         valutakode: engangsbeløp.valutakode,
         resultatKode: engangsbeløp.resultatkode,
         beløpBetalt: engangsbeløp.betaltBeløp,
