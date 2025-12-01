@@ -98,7 +98,7 @@ function VisualiserVedtakGraph({ behandlingId, vedtakId }: VedtakExplorerGraphPr
     const [searchParams, setSearchParams] = useSearchParams();
     type GrafType = "treegraph" | "flowchart";
     const [state, setState] = useState<GrafType>(
-        searchParams.get("graftype") == "flowchart" ? "flowchart" : "treegraph"
+        searchParams.get("graftype") == "treegraph" ? "treegraph" : "flowchart"
     );
 
     if (behandlingId == null && vedtakId == null) {
@@ -119,8 +119,8 @@ function VisualiserVedtakGraph({ behandlingId, vedtakId }: VedtakExplorerGraphPr
             size="small"
         >
             <Tabs.List>
-                <Tabs.Tab label="Flowchart" value="flowchart" />
                 <Tabs.Tab label="Tregraph" value="treegraph" />
+                <Tabs.Tab label="Flowchart" value="flowchart" />
             </Tabs.List>
             <ErrorBoundary
                 fallbackRender={(props: FallbackProps) => {
@@ -369,8 +369,8 @@ function toEchartData(tree: TreeChild) {
         value: tree.grunnlag
             ? JSON.stringify(tree?.grunnlag?.innhold, null, 2)
             : tree?.innhold
-                ? JSON.stringify(tree?.innhold, null, 2)
-                : "",
+            ? JSON.stringify(tree?.innhold, null, 2)
+            : "",
         itemStyle: {
             borderType: getBordertype(),
         },
@@ -384,7 +384,8 @@ function toEchartData(tree: TreeChild) {
                 return `
                 <strong style="font-size: 18px">${v.name}</strong>:
                 <br/>
-                ${tree.grunnlag
+                ${
+                    tree.grunnlag
                         ? `
                         <dl>
                             <dt>Gjelder</dt>
@@ -396,7 +397,7 @@ function toEchartData(tree: TreeChild) {
                         </dl>
                 <br/>`
                         : ""
-                    }
+                }
                 <pre>${v.value.replaceAll("\\n", "\n")}</pre>`;
             },
         },
