@@ -1,5 +1,5 @@
-## Bidrag-behandling-ui
-Template applikasjon for Bidrag UI mikrofrontend app
+## Bidrag-admin-ui
+DETTE REPOET ER OVERFØRT TIL BIDRAG-UI
 <br/>
 Dette er bare en mikrofrontend og har derfor ingen autentisering og innlogging av bruker. Det håndteres av [bidrag-ui](https://github.com/navikt/bidrag-ui) hvor token eksponeres av `/token` endepunktet.
 
